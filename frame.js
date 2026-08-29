@@ -144,18 +144,28 @@
 
   // 4. Scroll Reveal Animations
   document.querySelectorAll('.reveal-target').forEach((el) => {
-    scroll(animate(el, { opacity: [0, 1], y: [100, 0] }), { target: el, offset: ["start 95%", "center 75%"] });
+    scroll(
+      animate(el, { 
+        opacity: [0, 1], 
+        y: [80, 0],
+        scale: [0.92, 1],
+        filter: ['blur(15px)', 'blur(0px)']
+      }), 
+      { target: el, offset: ["start 100%", "center 75%"] }
+    );
   });
 
   // 5. Video Play/Pause Sync via IntersectionObserver
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
+      // The entry.target is now the .video-container itself
       const iframe = entry.target.querySelector('.yt-iframe');
       if (!iframe) return;
       const iframeWin = iframe.contentWindow;
+      
       if (entry.isIntersecting) {
         iframeWin.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-        if (audioUnlocked) {
+        if (typeof audioUnlocked !== 'undefined' && audioUnlocked) {
           iframeWin.postMessage('{"event":"command","func":"unMute","args":""}', '*');
           iframeWin.postMessage('{"event":"command","func":"setVolume","args":[100]}', '*');
         }
@@ -163,9 +173,10 @@
         iframeWin.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
       }
     });
-  }, { threshold: 0.3 });
+  }, { threshold: 0.5 });
 
-  cards.forEach(card => observer.observe(card));
+  // Attach observer ONLY to the videos, not the massive cards
+  document.querySelectorAll('.video-container').forEach(vid => observer.observe(vid));
 
   }
   if (window.Motion && (window.Motion.animate || window.Motion.scroll)) {

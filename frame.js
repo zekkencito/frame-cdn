@@ -1,8 +1,7 @@
 (function() {
   function run() {
-    const { animate, scroll } = window.Motion || {};
 
-  document.head.insertAdjacentHTML('beforeend', '<style>html, body, .section, .container { overflow-y: auto !important; overflow-x: hidden !important; height: auto !important; min-height: 100vh !important; display: block !important; }</style>');
+  document.head.insertAdjacentHTML('beforeend', '<style>html, body, .section, .container { overflow-y: auto !important; overflow-x: hidden !important; height: auto !important; min-height: 100vh !important; display: block !important; } .moment-grid { display: block !important; position: relative !important; width: 100% !important; } .reveal-target { opacity: 0; transform: translateY(80px) scale(0.92); filter: blur(15px); transition: opacity 0.8s ease-out, transform 0.8s ease-out, filter 0.8s ease-out; will-change: opacity, transform, filter; } .reveal-target.is-visible { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }</style>');
 
   // 1. Audio Unlock Overlay with Cinematic Collage Background
   document.body.insertAdjacentHTML('beforeend', `
@@ -142,18 +141,16 @@
     `);
   });
 
-  // 4. Scroll Reveal Animations
-  document.querySelectorAll('.reveal-target').forEach((el) => {
-    scroll(
-      animate(el, { 
-        opacity: [0, 1], 
-        y: [80, 0],
-        scale: [0.92, 1],
-        filter: ['blur(15px)', 'blur(0px)']
-      }), 
-      { target: el, offset: ["start 100%", "center 75%"] }
-    );
-  });
+  // 4. Reveal on scroll via Native IntersectionObserver + CSS transitions
+  const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        revealObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.2 });
+  document.querySelectorAll('.reveal-target').forEach(el => revealObs.observe(el));
 
   // 5. Video Play/Pause Sync via IntersectionObserver
   const observer = new IntersectionObserver((entries) => {
@@ -179,13 +176,5 @@
   document.querySelectorAll('.video-container').forEach(vid => observer.observe(vid));
 
   }
-  if (window.Motion && (window.Motion.animate || window.Motion.scroll)) {
-    run();
-  } else {
-    var s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/motion@10.16.4/dist/motion.js';
-    s.onload = function(){ run(); };
-    s.onerror = function(){ run(); };
-    document.head.appendChild(s);
-  }
+  run();
 })();

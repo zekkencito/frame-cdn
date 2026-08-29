@@ -1,5 +1,8 @@
+(function() {
+  function run() {
+    const { animate, scroll } = window.Motion || {};
 
-  import { animate, scroll } from "https://cdn.jsdelivr.net/npm/motion@10.16.4/+esm";
+
 
   // 1. Audio Unlock Overlay with Cinematic Collage Background
   document.body.insertAdjacentHTML('beforeend', `
@@ -148,3 +151,15 @@
   }, { threshold: 0.3 });
 
   cards.forEach(card => observer.observe(card));
+
+  }
+  if (window.Motion && (window.Motion.animate || window.Motion.scroll)) {
+    run();
+  } else {
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/motion@10.16.4/dist/motion.js';
+    s.onload = function(){ run(); };
+    s.onerror = function(){ run(); };
+    document.head.appendChild(s);
+  }
+})();

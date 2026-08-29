@@ -95,10 +95,10 @@
     `);
   });
 
-  // 4. Scroll Reveal Animations (DISABLED - Motion.dev opacity bug leaves elements invisible)
-  // document.querySelectorAll('.reveal-target').forEach((el) => {
-  //   scroll(animate(el, { opacity: [0, 1], y: [100, 0] }), { target: el, offset: ["start 120%", "center 85%"] });
-  // });
+  // 4. Scroll Reveal Animations
+  document.querySelectorAll('.reveal-target').forEach((el) => {
+    scroll(animate(el, { opacity: [0, 1], y: [100, 0] }), { target: el, offset: ["start 120%", "center 85%"] });
+  });
 
   // 5. Video Play/Pause Sync via IntersectionObserver
   const observer = new IntersectionObserver((entries) => {

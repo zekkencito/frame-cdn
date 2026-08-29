@@ -67,8 +67,23 @@
     }
   ];
 
+  // AUTO-GENERATE missing DOM structure for empty projects
+  const wrapper = document.querySelector('.frame-wrapper') || document.body;
+  let gridContainer = document.querySelector('.moment-grid');
+  if (!gridContainer) {
+    gridContainer = document.createElement('div');
+    gridContainer.className = 'moment-grid';
+    gridContainer.style.width = '100%';
+    gridContainer.style.position = 'relative';
+
+    // Auto-generate the 3 cards needed for our gameData
+    for(let i=0; i<3; i++) {
+      gridContainer.insertAdjacentHTML('beforeend', '<div class="moment-card section" style="position:relative; width:100%; display:block;"><div class="video-container"></div></div>');
+    }
+    wrapper.appendChild(gridContainer);
+  }
+
   // 3. Inject Hero Intro
-  const gridContainer = document.querySelector('.moment-grid');
   if(gridContainer) {
     gridContainer.insertAdjacentHTML('afterbegin', `
       <div style="height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0 5%;width:100%;">

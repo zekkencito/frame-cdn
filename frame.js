@@ -2,7 +2,7 @@
   function run() {
     const { animate, scroll } = window.Motion || {};
 
-
+  document.head.insertAdjacentHTML('beforeend', '<style>html, body, .section, .container { overflow-y: auto !important; overflow-x: hidden !important; height: auto !important; min-height: 100vh !important; display: block !important; }</style>');
 
   // 1. Audio Unlock Overlay with Cinematic Collage Background
   document.body.insertAdjacentHTML('beforeend', `

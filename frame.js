@@ -2,7 +2,7 @@
   function run() {
     const { animate, scroll } = window.Motion || {};
 
-
+  document.head.insertAdjacentHTML('beforeend', '<style>html, body, .section, .container { overflow-y: auto !important; overflow-x: hidden !important; height: auto !important; min-height: 100vh !important; display: block !important; } .moment-grid { display: block !important; position: relative !important; width: 100% !important; }</style>');
 
   // 1. Data with ZIG-ZAG Structure
   const gameData = [
@@ -40,8 +40,8 @@
   if(gridContainer) {
     gridContainer.insertAdjacentHTML('afterbegin', `
       <div style="height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0 5%;width:100%;">
-        <h2 class="reveal-target" style="font-size:clamp(30px,4vw,60px);color:#fff;text-transform:uppercase;letter-spacing:-1px;margin-bottom:40px;font-weight:800;">Scroll Down<br>To Begin</h2>
-        <div class="reveal-target" style="width:2px;height:150px;background:linear-gradient(to bottom,#E53935,transparent);"></div>
+        <h2 style="font-size:clamp(30px,4vw,60px);color:#fff;text-transform:uppercase;letter-spacing:-1px;margin-bottom:40px;font-weight:800;">Scroll Down<br>To Begin</h2>
+        <div style="width:2px;height:150px;background:linear-gradient(to bottom,#E53935,transparent);"></div>
       </div>
     `);
   }
@@ -97,7 +97,7 @@
 
   // 4. Scroll Reveal Animations
   document.querySelectorAll('.reveal-target').forEach((el) => {
-    scroll(animate(el, { opacity: [0, 1], y: [100, 0] }), { target: el, offset: ["start 95%", "center 75%"] });
+    scroll(animate(el, { opacity: [0, 1], y: [100, 0] }), { target: el, offset: ["start 120%", "center 85%"] });
   });
 
   // 5. Video Play/Pause Sync via IntersectionObserver

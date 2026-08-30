@@ -22,10 +22,22 @@
     .frame-canvas::before { content: ""; position: absolute; inset: 0; background: radial-gradient(1200px 800px at 80% -10%, var(--glow, rgba(229,57,53,0.18)), transparent 60%), radial-gradient(1000px 700px at 10% 110%, rgba(63,81,181,0.16), transparent 60%); transition: background 1.4s ease; }
     .video-slot { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
     .video-slot.is-active { opacity: 1; pointer-events: auto; }
+    /* Cinematic scroll stacking: dim cards exiting the top to keep the viewport focused */
+    .moment-card { transition: opacity 0.9s ease, transform 0.9s ease; opacity: 1; }
+    .moment-card.dimmed { opacity: 0.3; }
+    /* Accent cursor follower */
+    .cursor-glow { position: fixed; top: 0; left: 0; width: 34px; height: 34px; border-radius: 50%; pointer-events: none; z-index: 9998; background: radial-gradient(circle, var(--cursor, rgba(229,57,53,0.85)) 0%, transparent 70%); transform: translate(-50%,-50%); mix-blend-mode: screen; will-change: transform; }
+    .bloodrain img { filter: brightness(0.82) contrast(1.18) saturate(1.15) drop-shadow(0 0 18px rgba(216,27,96,0.35)); }
+    .bloodrain .gallery-grid img { filter: brightness(0.7) contrast(1.25) saturate(1.4) drop-shadow(0 0 14px rgba(216,27,96,0.4)); }
+    .perf-badge { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; font-size: 15px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; padding: 10px 18px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.04); color: #B9BDC6; transition: all 0.3s ease; }
+    .perf-badge:hover { transform: translateY(-2px); border-color: var(--cursor, #E53935); box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+    .perf-badge .perf-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--cursor, #E53935); box-shadow: 0 0 10px var(--cursor, #E53935); }
   </style>`);
 
   // 0. Dynamic cinematic background canvas (fixed, behind everything)
   document.body.insertAdjacentHTML('afterbegin', `<div class="frame-canvas" id="frame-canvas"></div>`);
+  // Accent cursor follower (interactive polish)
+  document.body.insertAdjacentHTML('beforeend', `<div class="cursor-glow" id="cursor-glow"></div>`);
 
   // 1. Audio Unlock Overlay with Cinematic Collage Background
   const overlayIds = ["cWBdELprqqk","nTUoIyTMw0Q","YHhwdyWkwTQ","2VaLOc1FpSo","4aVoaSixc0E","lTHTfqPTQ1k","BoHg3zeUSWI","avpTgTNadh4","SB3siHVCHpY"];
@@ -147,7 +159,7 @@
       shots: ["https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/ss_483a27df5072beb3a4650634a764bda750fbcb82.1920x1080.jpg?t=1782830877", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/ss_e49800e906e8a0f00707458c836567c933603bac.1920x1080.jpg?t=1782830877", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/ss_b8089016095e6a16e324a59c45b2f24a439bd0b3.1920x1080.jpg?t=1782830877", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/ss_8439c07d7b1f2fcfc6449db5f051f8d0867f4785.1920x1080.jpg?t=1782830877", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/ss_9e050e6a61a4d9f4fe54bc62c8c73da38e9a63b0.1920x1080.jpg?t=1782830877", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/ss_d3a10809f5cc2a8df7773f41acd1493f4fb900ec.1920x1080.jpg?t=1782830877", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/ss_ec16f873c7d14fc4a4f17966b25f9712dc486b4a.1920x1080.jpg?t=1782830877", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/ss_c130295c9e1169dc0c63eaae0618e64d06a88c92.1920x1080.jpg?t=1782830877"],
     },
     {
-      id: "4aVoaSixc0E", start: 169, accent: "#d81b60",
+      id: "4aVoaSixc0E", start: 169, accent: "#d81b60", bloodRain: true,
       title: "STELLAR BLADE: BLOOD RAIN",
       desc: "The direct sequel to Stellar Blade from SHIFT UP, self-published and aimed at a day-one multiplatform launch. Follow new protagonist Evie through a rain-soaked urban warzone against the Naytiba.",
       lore: "In the aftermath of the Colony's war against the Naytiba, a rain-slicked megacity is all that stands between humanity and extinction. Follow Evie, a field agent reshaped by loss, as she cuts a path through streets that breed monsters. With a sentient combat system growing ever more sentient beside her, BLOOD RAIN is a personal, storm-lit story about how far one person will go to pay back the dead.",
@@ -270,7 +282,7 @@
   // Build every card with a persistent, preloaded (hidden) iframe — zero load delay
   gameData.forEach((g) => {
     gridContainer.insertAdjacentHTML('beforeend', `
-      <div class="moment-card section" data-accent="${g.accent}" style="position:relative;width:100%;display:block;">
+      <div class="moment-card section${g.bloodRain ? ' bloodrain' : ''}" data-accent="${g.accent}" data-index="${gameData.indexOf(g)}" style="position:relative;width:100%;display:block;">
         <div class="video-container" style="height:85vh;position:relative;clip-path:polygon(10% 0,100% 0,90% 100%,0 100%);">
           <div class="video-slot">
             <iframe class="yt-iframe" title="${g.title}" src="https://www.youtube.com/embed/${g.id}?autoplay=0&mute=1&controls=0&loop=1&playlist=${g.id}&start=${g.start}&enablejsapi=1" allow="autoplay; fullscreen" style="position:absolute;top:50%;left:50%;width:130vw;height:130vh;transform:translate(-50%,-50%);border:0;"></iframe>
@@ -303,6 +315,9 @@
         <div class="reveal-target" style="width:100%;text-align:center;">
           <h3 style="font-size:clamp(60px,8vw,120px);line-height:0.9;margin-bottom:30px;color:#fff;font-weight:900;text-transform:uppercase;letter-spacing:-4px;filter:blur(0) !important;">${d.title}</h3>
           <p style="font-size:24px;line-height:1.6;color:#EDEDEF;max-width:950px;margin:0 auto;">${d.desc}</p>
+          <div style="margin-top:34px;display:flex;justify-content:center;">
+            <div class="perf-badge" data-mode="high" data-card="${index}"><span class="perf-dot"></span><span class="perf-mode">High Quality</span><span style="opacity:0.55;font-weight:600;letter-spacing:1px;">target</span></div>
+          </div>
         </div>
 
         <div class="reveal-target" style="width:100%;max-width:950px;margin:0 auto;">
@@ -327,7 +342,7 @@
 
         <div class="reveal-target" style="width:100%;">
           <h4 style="font-size:28px;color:#fff;margin-bottom:40px;text-transform:uppercase;font-weight:800;letter-spacing:0;text-align:center;">The Gallery</h4>
-          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:24px;">${(d.shots||d.combat.slice(0,6).map(function(){return d.img1})).map(function(s,i){var span = (i%3===0)?'grid-column:span 2;':''; return '<img loading="lazy" src="'+s+'" style="width:100%;height:100%;object-fit:cover;aspect-ratio:16/10;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,0.7);'+span+'">';}).join('')}</div>
+          <div class="gallery-grid" data-gallery="${index}" style="display:grid;grid-template-columns:repeat(2,1fr);gap:24px;">${(d.shots||d.combat.slice(0,6).map(function(){return d.img1})).map(function(s,i){var span = (i%3===0)?'grid-column:span 2;':''; return '<img loading="lazy" src="'+s+'" style="width:100%;height:100%;object-fit:cover;aspect-ratio:16/10;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,0.7);'+span+'">';}).join('')}</div>
         </div>
 
       </div>
@@ -352,6 +367,8 @@
     if (!canvas) return;
     canvas.style.cssText = `--glow:${hexToRgba(accent, 0.22)};`;
     canvas.style.background = `radial-gradient(1200px 800px at 80% -10%, ${hexToRgba(accent, 0.35)}, transparent 60%), radial-gradient(1000px 700px at 10% 110%, #0d1137, transparent 60%)`;
+    const cg = document.getElementById('cursor-glow');
+    if (cg) { cg.style.setProperty('--cursor', accent); }
   }
 
   function hexToRgba(hex, a) {
@@ -368,6 +385,7 @@
       const slot = container.querySelector('.video-slot');
       const iframe = slot ? slot.querySelector('.yt-iframe') : null;
       const accent = card ? card.getAttribute('data-accent') : '#e53935';
+      const idx = card ? parseInt(card.getAttribute('data-index') || '0', 10) : 0;
 
       // fade this one in, others out
       document.querySelectorAll('.video-slot.is-active').forEach(s => {
@@ -378,6 +396,12 @@
         }
       });
       if (slot) slot.classList.add('is-active');
+
+      // Cinematic stacking: dim cards that have scrolled past the active one
+      document.querySelectorAll('.moment-card').forEach((c, ci) => {
+        if (ci < idx) c.classList.add('dimmed');
+        else c.classList.remove('dimmed');
+      });
 
       // dynamic background shift
       shiftBackground(accent);
@@ -394,6 +418,65 @@
   }, { threshold: 0.5 });
 
   document.querySelectorAll('.video-container').forEach(vc => activeObserver.observe(vc));
+
+  // ======================= PREDICTIVE N+1 PRE-LOAD =======================
+  function postToFrame(container, payload) {
+    const f = container ? container.querySelector('.yt-iframe') : null;
+    if (f && f.contentWindow) f.contentWindow.postMessage(payload, '*');
+  }
+  // Force the next card's iframe to begin buffering so it starts with zero lag
+  function prepNext(nextIndex) {
+    if (nextIndex >= gameData.length) nextIndex = 0;
+    const target = document.querySelectorAll('.moment-card')[nextIndex];
+    const slot = target ? target.querySelector('.video-slot') : null;
+    if (!slot) return;
+    const g = gameData[nextIndex];
+    postToFrame(slot, '{"event":"command","func":"playVideo","args":""}');
+    postToFrame(slot, '{"event":"command","func":"seekTo","args":[' + (g ? g.start : 0) + ']}');
+    // buffer it silently, then pause + mute so it is ready on demand
+    setTimeout(() => {
+      postToFrame(slot, '{"event":"command","func":"pauseVideo","args":""}');
+    }, 1200);
+  }
+  const galleryObs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const idx = parseInt(entry.target.getAttribute('data-gallery') || '0', 10);
+        prepNext(idx + 1);
+      }
+    });
+  }, { threshold: 0.35 });
+  document.querySelectorAll('.gallery-grid').forEach(gg => galleryObs.observe(gg));
+
+  // ======================= ACCENT CURSOR FOLLOWER =======================
+  (function initCursor() {
+    const glow = document.getElementById('cursor-glow');
+    if (!glow) return;
+    let tx = -100, ty = -100, x = -100, y = -100, raf = null;
+    document.addEventListener('mousemove', (e) => { tx = e.clientX; ty = e.clientY; });
+    function loop() {
+      x += (tx - x) * 0.22;
+      y += (ty - y) * 0.22;
+      glow.style.transform = 'translate(' + (x - 17) + 'px,' + (y - 17) + 'px)';
+      raf = requestAnimationFrame(loop);
+    }
+    loop();
+  })();
+
+  // ======================= PERF PRESET BADGE TOGGLE =======================
+  document.addEventListener('click', (e) => {
+    const badge = e.target.closest('.perf-badge');
+    if (!badge) return;
+    const modeEl = badge.querySelector('.perf-mode');
+    const on = badge.getAttribute('data-mode');
+    if (on === 'high') {
+      badge.setAttribute('data-mode', 'proton');
+      modeEl.textContent = 'Linux Proton';
+    } else {
+      badge.setAttribute('data-mode', 'high');
+      modeEl.textContent = 'High Quality';
+    }
+  });
 
   }
   run();

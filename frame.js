@@ -1,12 +1,23 @@
 (function() {
   function run() {
 
+  // 0a. INSTANT YOUTUBE PRELOADER: preconnect network handshakes
+  ['https://www.youtube.com', 'https://www.google.com', 'https://shared.akamai.steamstatic.com', 'https://i.ytimg.com'].forEach(function(h){
+    var l = document.createElement('link');
+    l.rel = 'preconnect'; l.href = h;
+    document.head.appendChild(l);
+    var d = document.createElement('link');
+    d.rel = 'dns-prefetch'; d.href = h;
+    document.head.appendChild(d);
+  });
+
   document.head.insertAdjacentHTML('beforeend', `<style>
     html, body, .section, .container { overflow-y: auto !important; overflow-x: hidden !important; height: auto !important; min-height: 100vh !important; display: block !important; }
     .moment-grid { display: block !important; position: relative !important; width: 100% !important; z-index: 1 !important; }
     .reveal-target { opacity: 0; transform: translateY(80px) scale(0.92); filter: blur(15px); transition: opacity 0.8s ease-out, transform 0.8s ease-out, filter 0.8s ease-out; will-change: opacity, transform, filter; }
     .reveal-target.is-visible { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
     body { background: #050506 !important; transition: background 1.2s ease !important; }
+    .moment-card { min-height: 200vh !important; }
     .frame-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; overflow: hidden; background: #050506; transition: background 1.4s ease; }
     .frame-canvas::before { content: ""; position: absolute; inset: 0; background: radial-gradient(1200px 800px at 80% -10%, var(--glow, rgba(229,57,53,0.18)), transparent 60%), radial-gradient(1000px 700px at 10% 110%, rgba(63,81,181,0.16), transparent 60%); transition: background 1.4s ease; }
     .video-slot { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
@@ -36,7 +47,6 @@
     this.style.opacity = '0';
     setTimeout(() => this.remove(), 800);
     setTimeout(() => {
-      // Unmute + set volume on whatever is active right now
       const active = document.querySelector('.video-slot.is-active .yt-iframe');
       if (active && active.contentWindow) {
         active.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
@@ -66,7 +76,9 @@
         "Use an SSD to keep seamless world-streaming stagger-free during zero-G shifts."
       ],
       img1: "https://i.ytimg.com/vi/cWBdELprqqk/maxresdefault.jpg",
-      img2: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/62486c0475c7bf1a14889d61a51ad24f09e5f044/ss_62486c0475c7bf1a14889d61a51ad24f09e5f044.1920x1080.jpg?t=1777351016"
+      img2: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/62486c0475c7bf1a14889d61a51ad24f09e5f044/ss_62486c0475c7bf1a14889d61a51ad24f09e5f044.1920x1080.jpg?t=1777351016",
+
+      shots: ["https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/9699288b90d0aad320e998f107b59edd27e9ea61/ss_9699288b90d0aad320e998f107b59edd27e9ea61.1920x1080.jpg?t=1777351016", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/62486c0475c7bf1a14889d61a51ad24f09e5f044/ss_62486c0475c7bf1a14889d61a51ad24f09e5f044.1920x1080.jpg?t=1777351016", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/26773713a2435c8edc2eac5e7eb234324b3b002f/ss_26773713a2435c8edc2eac5e7eb234324b3b002f.1920x1080.jpg?t=1777351016", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/8913ab7128c72ddd1b407c274e9615b2f6e658a2/ss_8913ab7128c72ddd1b407c274e9615b2f6e658a2.1920x1080.jpg?t=1777351016", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/24bebf802a598b3d5d6838828cf074e4445ec939/ss_24bebf802a598b3d5d6838828cf074e4445ec939.1920x1080.jpg?t=1777351016", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/47776629e71f7769f2482259258a1aeb9babe31c/ss_47776629e71f7769f2482259258a1aeb9babe31c.1920x1080.jpg?t=1777351016", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/5b6a007e52e0b2d4a36b74736ea2fa416830bf6f/ss_5b6a007e52e0b2d4a36b74736ea2fa416830bf6f.1920x1080.jpg?t=1777351016", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/c83fa1a03cf350ae0f049579daaa117414c9c745/ss_c83fa1a03cf350ae0f049579daaa117414c9c745.1920x1080.jpg?t=1777351016"],
     },
     {
       id: "nTUoIyTMw0Q", start: 88, accent: "#f39c12",
@@ -86,7 +98,9 @@
         "Fast NVMe drives cut the taut, filmic scene transitions to near-instant."
       ],
       img1: "https://i.ytimg.com/vi/nTUoIyTMw0Q/maxresdefault.jpg",
-      img2: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3768760/ef374e5e4ede8c71f32d455652bc00f2fa7c035e/ss_ef374e5e4ede8c71f32d455652bc00f2fa7c035e.1920x1080.jpg?t=1786116490"
+      img2: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3768760/ef374e5e4ede8c71f32d455652bc00f2fa7c035e/ss_ef374e5e4ede8c71f32d455652bc00f2fa7c035e.1920x1080.jpg?t=1786116490",
+
+      shots: ["https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3768760/ef374e5e4ede8c71f32d455652bc00f2fa7c035e/ss_ef374e5e4ede8c71f32d455652bc00f2fa7c035e.1920x1080.jpg?t=1786116490", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3768760/18787f52adabf0e5248548ed83562e6aac88f94d/ss_18787f52adabf0e5248548ed83562e6aac88f94d.1920x1080.jpg?t=1786116490", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3768760/c5e19e3879ed6da308e952d1e8d7bdc4cd835b4c/ss_c5e19e3879ed6da308e952d1e8d7bdc4cd835b4c.1920x1080.jpg?t=1786116490", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3768760/6ad4e419c1eb043e3a12b9cc37166cdf204725c1/ss_6ad4e419c1eb043e3a12b9cc37166cdf204725c1.1920x1080.jpg?t=1786116490", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3768760/2e3f04c42cca344dd3ca0be30c5078719bce23ed/ss_2e3f04c42cca344dd3ca0be30c5078719bce23ed.1920x1080.jpg?t=1786116490", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3768760/d076a739da6136dc4da2c48750eb6f780d4f826d/ss_d076a739da6136dc4da2c48750eb6f780d4f826d.1920x1080.jpg?t=1786116490", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3768760/4c81e0e09db3feb0ccf680418a1b766989c8173a/ss_4c81e0e09db3feb0ccf680418a1b766989c8173a.1920x1080.jpg?t=1786116490", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3768760/7683959b09f7863c5eb23bfdbcf039269765b5d6/ss_7683959b09f7863c5eb23bfdbcf039269765b5d6.1920x1080.jpg?t=1786116490"],
     },
     {
       id: "YHhwdyWkwTQ", start: 26, accent: "#8e24aa",
@@ -106,7 +120,9 @@
         "Lock to 60 and let the engine's animation fidelity shine at 4K."
       ],
       img1: "https://i.ytimg.com/vi/YHhwdyWkwTQ/maxresdefault.jpg",
-      img2: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3321460/b154a083ff9a746c71a1513334042e1bb9403a8b/ss_b154a083ff9a746c71a1513334042e1bb9403a8b.1920x1080.jpg?t=1787909144"
+      img2: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3321460/b154a083ff9a746c71a1513334042e1bb9403a8b/ss_b154a083ff9a746c71a1513334042e1bb9403a8b.1920x1080.jpg?t=1787909144",
+
+      shots: ["https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3321460/667d1763ae26137aafbc3140963621f530b43289/ss_667d1763ae26137aafbc3140963621f530b43289.1920x1080.jpg?t=1787909144", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3321460/b154a083ff9a746c71a1513334042e1bb9403a8b/ss_b154a083ff9a746c71a1513334042e1bb9403a8b.1920x1080.jpg?t=1787909144", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3321460/286938f408f5f0c6409f49584f33e8d497433123/ss_286938f408f5f0c6409f49584f33e8d497433123.1920x1080.jpg?t=1787909144", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3321460/91f6ddd6a4cc0f704bee1956701a3f36447fe02a/ss_91f6ddd6a4cc0f704bee1956701a3f36447fe02a.1920x1080.jpg?t=1787909144", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3321460/a14943bf53cb2d32075ed7c42ee50ea085e49fea/ss_a14943bf53cb2d32075ed7c42ee50ea085e49fea.1920x1080.jpg?t=1787909144", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3321460/b24b12cb001104fe90753f043a7f788c705593c2/ss_b24b12cb001104fe90753f043a7f788c705593c2.1920x1080.jpg?t=1787909144", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3321460/669119c3747653f41a46c59f213168448d094e04/ss_669119c3747653f41a46c59f213168448d094e04.1920x1080.jpg?t=1787909144", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3321460/4b178bdd24ed576458116d8d3383b5352dad0fae/ss_4b178bdd24ed576458116d8d3383b5352dad0fae.1920x1080.jpg?t=1787909144"],
     },
     {
       id: "2VaLOc1FpSo", start: 57, accent: "#1e88e5",
@@ -126,7 +142,9 @@
         "Cap at 60; the cinematic combat already reads beautifully at 4K clarity."
       ],
       img1: "https://i.ytimg.com/vi/2VaLOc1FpSo/maxresdefault.jpg",
-      img2: "https://i.ytimg.com/vi/2VaLOc1FpSo/maxresdefault.jpg"
+      img2: "https://i.ytimg.com/vi/2VaLOc1FpSo/maxresdefault.jpg",
+
+      shots: ["https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/ss_483a27df5072beb3a4650634a764bda750fbcb82.1920x1080.jpg?t=1782830877", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/ss_e49800e906e8a0f00707458c836567c933603bac.1920x1080.jpg?t=1782830877", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/ss_b8089016095e6a16e324a59c45b2f24a439bd0b3.1920x1080.jpg?t=1782830877", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/ss_8439c07d7b1f2fcfc6449db5f051f8d0867f4785.1920x1080.jpg?t=1782830877", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/ss_9e050e6a61a4d9f4fe54bc62c8c73da38e9a63b0.1920x1080.jpg?t=1782830877", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/ss_d3a10809f5cc2a8df7773f41acd1493f4fb900ec.1920x1080.jpg?t=1782830877", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/ss_ec16f873c7d14fc4a4f17966b25f9712dc486b4a.1920x1080.jpg?t=1782830877", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1903340/ss_c130295c9e1169dc0c63eaae0618e64d06a88c92.1920x1080.jpg?t=1782830877"],
     },
     {
       id: "4aVoaSixc0E", start: 169, accent: "#d81b60",
@@ -146,7 +164,9 @@
         "Expect excellent 60fps headroom on current-gen PC hardware."
       ],
       img1: "https://i.ytimg.com/vi/4aVoaSixc0E/maxresdefault.jpg",
-      img2: "https://i.ytimg.com/vi/4aVoaSixc0E/maxresdefault.jpg"
+      img2: "https://i.ytimg.com/vi/4aVoaSixc0E/maxresdefault.jpg",
+
+      shots: ["https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3489700/ss_4291827e357008499d4d5a17bc50d3e93869dd43.1920x1080.jpg?t=1776466244", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3489700/ss_9d4d62e118a167333d53db94354671e10416b25d.1920x1080.jpg?t=1776466244", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3489700/ss_bcb3946482dc5a1221c024098d2ac09e80255f3e.1920x1080.jpg?t=1776466244", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3489700/ss_1ae903bf4153fa2c2b3ee4381eb355532ba79eab.1920x1080.jpg?t=1776466244", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3489700/ss_0a156afe90170ba75773a6fe901153c4dd318980.1920x1080.jpg?t=1776466244", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3489700/ss_590074c0cfa8c7098358a128f656b0198af8f0be.1920x1080.jpg?t=1776466244", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3489700/ss_02282b4eb4c8b13129a13908b85840dbf2168644.1920x1080.jpg?t=1776466244", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3489700/ss_2d4ad1a81618920416e7b68d02dc266ac898f144.1920x1080.jpg?t=1776466244"],
     },
     {
       id: "lTHTfqPTQ1k", start: 35, accent: "#6a1b9a",
@@ -166,7 +186,9 @@
         "An SSD keeps the surreal reality-transitions seamless and lag-free."
       ],
       img1: "https://i.ytimg.com/vi/lTHTfqPTQ1k/maxresdefault.jpg",
-      img2: "https://i.ytimg.com/vi/lTHTfqPTQ1k/maxresdefault.jpg"
+      img2: "https://i.ytimg.com/vi/lTHTfqPTQ1k/maxresdefault.jpg",
+
+      shots: ["https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3669870/422f3eed36d3033c4b0f4fde485c29b980e49454/ss_422f3eed36d3033c4b0f4fde485c29b980e49454.1920x1080.jpg?t=1787683983", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3669870/8b78ebe9024b52aded07863c0da0cbb08c1a966f/ss_8b78ebe9024b52aded07863c0da0cbb08c1a966f.1920x1080.jpg?t=1787683983", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3669870/4ce55d730791b45afae9fe2573ff764b34103a75/ss_4ce55d730791b45afae9fe2573ff764b34103a75.1920x1080.jpg?t=1787683983", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3669870/3cd16ad00ff2e2f7a2e5c5d7781597fdd32ed6c0/ss_3cd16ad00ff2e2f7a2e5c5d7781597fdd32ed6c0.1920x1080.jpg?t=1787683983", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3669870/75b1cde9947eea89eed52cf8f6471683f2e666a9/ss_75b1cde9947eea89eed52cf8f6471683f2e666a9.1920x1080.jpg?t=1787683983", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3669870/36eb4c588274f15ea0d958af6db8b2283602cb55/ss_36eb4c588274f15ea0d958af6db8b2283602cb55.1920x1080.jpg?t=1787683983", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3669870/08b6018c06d5125a39ff34a395e0dcfdede8bde8/ss_08b6018c06d5125a39ff34a395e0dcfdede8bde8.1920x1080.jpg?t=1787683983", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3669870/062a27d1b18679df1ecd4faf90af2c3f52e41dc1/ss_062a27d1b18679df1ecd4faf90af2c3f52e41dc1.1920x1080.jpg?t=1787683983"],
     },
     {
       id: "BoHg3zeUSWI", start: 36, accent: "#00acc1",
@@ -186,7 +208,9 @@
         "HDR + high contrast settings make the neon-noir cityscape sing."
       ],
       img1: "https://i.ytimg.com/vi/BoHg3zeUSWI/maxresdefault.jpg",
-      img2: "https://i.ytimg.com/vi/BoHg3zeUSWI/maxresdefault.jpg"
+      img2: "https://i.ytimg.com/vi/BoHg3zeUSWI/maxresdefault.jpg",
+
+      shots: ["https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1731290/9d51f7e4288d8c6d2bdb8db8ef6cd60026cae6b7/ss_9d51f7e4288d8c6d2bdb8db8ef6cd60026cae6b7.1920x1080.jpg?t=1787846453", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1731290/26abb28c619d242fb2b01b059ad0b27b4b2ff804/ss_26abb28c619d242fb2b01b059ad0b27b4b2ff804.1920x1080.jpg?t=1787846453", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1731290/ss_4a61343924dfa845b6d84270057eb88125028e44.1920x1080.jpg?t=1787846453", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1731290/8a102bbc7d71ce6336d4703f4ba76976040139e7/ss_8a102bbc7d71ce6336d4703f4ba76976040139e7.1920x1080.jpg?t=1787846453", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1731290/f7d747741c9749bc64309f4601c1c8148e1e768e/ss_f7d747741c9749bc64309f4601c1c8148e1e768e.1920x1080.jpg?t=1787846453", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1731290/ss_cd498c0db069fcfd8ac81bd07755170de64a5f05.1920x1080.jpg?t=1787846453", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1731290/ss_abb055621c4eb52fb23a3181949a2c846a23f208.1920x1080.jpg?t=1787846453", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1731290/d403db2fd19af6c188153b13edbc57feeb8bcf0d/ss_d403db2fd19af6c188153b13edbc57feeb8bcf0d.1920x1080.jpg?t=1787846453"],
     },
     {
       id: "avpTgTNadh4", start: 216, accent: "#c62828",
@@ -206,7 +230,9 @@
         "Rich Japanese voice + subtitles preserve the showman spectacle."
       ],
       img1: "https://i.ytimg.com/vi/avpTgTNadh4/maxresdefault.jpg",
-      img2: "https://i.ytimg.com/vi/avpTgTNadh4/maxresdefault.jpg"
+      img2: "https://i.ytimg.com/vi/avpTgTNadh4/maxresdefault.jpg",
+
+      shots: ["https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4260840/f65464e2f5e566b75133e70b66835eaa1426b346/ss_f65464e2f5e566b75133e70b66835eaa1426b346.1920x1080.jpg?t=1787806014", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4260840/b5e06a575d1056516057e17f5480df5469025eab/ss_b5e06a575d1056516057e17f5480df5469025eab.1920x1080.jpg?t=1787806014", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4260840/34f79225201d7b3101c919ff4f54f6b3a66d7997/ss_34f79225201d7b3101c919ff4f54f6b3a66d7997.1920x1080.jpg?t=1787806014", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4260840/7bba5e7ff5f318e7e53aba322b45a4b47b69aecc/ss_7bba5e7ff5f318e7e53aba322b45a4b47b69aecc.1920x1080.jpg?t=1787806014", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4260840/3e647a8f13db648173828e0ab5f98361b3695617/ss_3e647a8f13db648173828e0ab5f98361b3695617.1920x1080.jpg?t=1787806014", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4260840/fa52330262734f26bca624c886fbd50ab0995dc1/ss_fa52330262734f26bca624c886fbd50ab0995dc1.1920x1080.jpg?t=1787806014", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4260840/4d4cd5c94d9a0bd645bbbf2a484626260bb8ee20/ss_4d4cd5c94d9a0bd645bbbf2a484626260bb8ee20.1920x1080.jpg?t=1787806014", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4260840/dde75984ccd7f1a6c957174b23cd4344bd0dbe44/ss_dde75984ccd7f1a6c957174b23cd4344bd0dbe44.1920x1080.jpg?t=1787806014"],
     },
     {
       id: "SB3siHVCHpY", start: 21, accent: "#2e7d32",
@@ -226,7 +252,9 @@
         "Mod support makes Songs of the Past endlessly replayable on PC."
       ],
       img1: "https://i.ytimg.com/vi/SB3siHVCHpY/maxresdefault.jpg",
-      img2: "https://i.ytimg.com/vi/SB3siHVCHpY/maxresdefault.jpg"
+      img2: "https://i.ytimg.com/vi/SB3siHVCHpY/maxresdefault.jpg",
+
+      shots: ["https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/5006530/e6adbc6674a2cd6ae9dd59917a1ce3bf8c219e48/ss_e6adbc6674a2cd6ae9dd59917a1ce3bf8c219e48.1920x1080.jpg?t=1787926037", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/5006530/11c2ab33bdd2fe545eba5daa0ef4dd143b27ec02/ss_11c2ab33bdd2fe545eba5daa0ef4dd143b27ec02.1920x1080.jpg?t=1787926037", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/5006530/ed0058ce7306085223d52dedb078309295916a97/ss_ed0058ce7306085223d52dedb078309295916a97.1920x1080.jpg?t=1787926037", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/5006530/18d00b2ddbe8deb70a8028da9726517be88d7af0/ss_18d00b2ddbe8deb70a8028da9726517be88d7af0.1920x1080.jpg?t=1787926037", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/5006530/271acc7cebd1faeaa848997e60eb8f5a92ff94fd/ss_271acc7cebd1faeaa848997e60eb8f5a92ff94fd.1920x1080.jpg?t=1787926037", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/5006530/9f1c3c1d58fa8d6349ad5c6d1203d6f5fdedf682/ss_9f1c3c1d58fa8d6349ad5c6d1203d6f5fdedf682.1920x1080.jpg?t=1787926037", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/5006530/29507154017a32021d8e948f1fe4938d3f307a6a/ss_29507154017a32021d8e948f1fe4938d3f307a6a.1920x1080.jpg?t=1787926037", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/5006530/e204d9208c5e1cf37e5d0287d27ce725c91ed98b/ss_e204d9208c5e1cf37e5d0287d27ce725c91ed98b.1920x1080.jpg?t=1787926037"],
     }
   ];
 
@@ -264,7 +292,7 @@
   const cards = document.querySelectorAll('.moment-card');
   cards.forEach((card, index) => {
     const d = gameData[index] || gameData[0];
-    card.style.paddingBottom = '15vh';
+    card.style.paddingBottom = '20vh';
 
     const combatItems = d.combat.map(l => `<li style="font-size:19px;line-height:1.7;color:#8A8F98;margin-bottom:12px;">${l}</li>`).join('');
     const perfItems = d.perf.map(l => `<li style="font-size:19px;line-height:1.7;color:#8A8F98;margin-bottom:12px;">${l}</li>`).join('');
@@ -295,6 +323,11 @@
         <div class="reveal-target" style="width:100%;">
           <h4 style="font-size:28px;color:#fff;margin-bottom:16px;text-transform:uppercase;font-weight:800;letter-spacing:0;">PC Performance Optimization</h4>
           <ul style="list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:20px;">${d.perf.map(l => `<li style="flex:1 1 45%;min-width:280px;font-size:18px;line-height:1.6;color:#8A8F98;background:rgba(255,255,255,0.03);border-radius:12px;padding:18px;border-left:3px solid ${d.accent};">${l}</li>`).join('')}</ul>
+        </div>
+
+        <div class="reveal-target" style="width:100%;">
+          <h4 style="font-size:28px;color:#fff;margin-bottom:40px;text-transform:uppercase;font-weight:800;letter-spacing:0;text-align:center;">The Gallery</h4>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:24px;">${(d.shots||d.combat.slice(0,6).map(function(){return d.img1})).map(function(s,i){var span = (i%3===0)?'grid-column:span 2;':''; return '<img loading="lazy" src="'+s+'" style="width:100%;height:100%;object-fit:cover;aspect-ratio:16/10;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,0.7);'+span+'">';}).join('')}</div>
         </div>
 
       </div>

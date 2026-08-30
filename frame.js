@@ -46,13 +46,13 @@
     }, 500);
   });
 
-  // ======================= DATA - 9 GAMES =======================
+  // ======================= DATA — 9 GAMES =======================
   const gameData = [
     {
       id: "cWBdELprqqk", start: 26, accent: "#e53935",
       title: "PRAGMATA",
       desc: "From Capcom comes a breathtaking sci-fi action adventure set in a doomed, dystopian lunar colony. A shipwrecked astronaut and a mysterious little girl must escape a world where nothing is as it seems.",
-      lore: "Hundreds of years in the future, Earth's scattered survivors have been forced into the cold vacuum of space. When shipwrecked astronaut David and a mysterious little girl named Luka are stranded on a decaying lunar colony, they must rely on each other to survive one impossible escape. Beneath the colony's rusted corridors and drifting zero-gravity wreckage hides a tragedy older than either of them can remember - and a truth that will rewrite everything humanity thought it knew.",
+      lore: "Hundreds of years in the future, Earth's scattered survivors have been forced into the cold vacuum of space. When shipwrecked astronaut David and a mysterious little girl named Luka are stranded on a decaying lunar colony, they must rely on each other to survive one impossible escape. Beneath the colony's rusted corridors and drifting zero-gravity wreckage hides a tragedy older than either of them can remember — and a truth that will rewrite everything humanity thought it knew.",
       combat: [
         "Seamless physics-driven action that reacts to every blow in real time.",
         "Dynamic close-quarters gunplay blended with inhibitor-empowered mobility.",
@@ -60,7 +60,7 @@
         "Encounter design built around gravity: disorienting, thrilling, unforgettable."
       ],
       perf: [
-        "Capcom's RE engine scales beautifully - target 60fps with DLSS Quality on PC.",
+        "Capcom's RE engine scales beautifully — target 60fps with DLSS Quality on PC.",
         "Enable ray-traced reflections for the neon-drenched colony to truly pop.",
         "Reduce shadow quality first if GPU-bound; character detail is well-optimized.",
         "Use an SSD to keep seamless world-streaming stagger-free during zero-G shifts."
@@ -72,16 +72,16 @@
       id: "nTUoIyTMw0Q", start: 88, accent: "#f39c12",
       title: "007 FIRST LIGHT",
       desc: "From IO Interactive, creators of HITMAN, comes a wholly original James Bond origin story. Earn your 00 status in a brand-new espionage thriller that launched May 2026 on PS5, Windows and Xbox Series X|S.",
-      lore: "Before the tuxedos, the martinis and the world-saving, James Bond was a penniless young naval officer with everything to prove. First Light is the studio's definitive Bond origin - a gritty, human spy thriller about the making of the man who would become 007. Across misty Berlin streets, snowbound Nordic estates and the halls of MI6 itself, Bond must earn his licence to kill one impossible mission at a time.",
+      lore: "Before the tuxedos, the martinis and the world-saving, James Bond was a penniless young naval officer with everything to prove. First Light is the studio's definitive Bond origin — a gritty, human spy thriller about the making of the man who would become 007. Across misty Berlin streets, snowbound Nordic estates and the halls of MI6 itself, Bond must earn his licence to kill one impossible mission at a time.",
       combat: [
         "IO Interactive's signature sandbox: every approach is a valid, playable strategy.",
         "Gunfights, stealth takedowns and brutal escape sequences in equal measure.",
-        "Iconic supporting cast - M, Q and Moneypenny - woven into brand-new missions.",
+        "Iconic supporting cast — M, Q and Moneypenny — woven into brand-new missions.",
         "Reactive, systemic levels where no two runs play the same way."
       ],
       perf: [
         "Aim for 1440p/120fps on high-end rigs; the Glaciert engine is extremely scalable.",
-        "Tweak crowd density first - spy-thriller set pieces love packed streetscapes.",
+        "Tweak crowd density first — spy-thriller set pieces love packed streetscapes.",
         "DLSS 3 Frame Generation gives 4K HDR playtime a big headroom boost.",
         "Fast NVMe drives cut the taut, filmic scene transitions to near-instant."
       ],
@@ -92,7 +92,7 @@
       id: "YHhwdyWkwTQ", start: 26, accent: "#8e24aa",
       title: "CRIMSON DESERT",
       desc: "A sweeping open-world action-adventure from the creators of Black Desert. Follow mercenary Macduff and his companions as they fight to survive the brutal, unforgiving continent of Pywel.",
-      lore: "On the war-ravaged continent of Pywel, mercenaries are the only currency that still buys survival. Macduff and the Grey Mane company roam a land of feuding lords, monstrous beasts and the ghosts of a shattered kingdom. Every contract tests their bonds, every battlefield reshapes the map - and somewhere beyond the blood-soaked frontier lies the crimson desert where the company's true fate will be decided.",
+      lore: "On the war-ravaged continent of Pywel, mercenaries are the only currency that still buys survival. Macduff and the Grey Mane company roam a land of feuding lords, monstrous beasts and the ghosts of a shattered kingdom. Every contract tests their bonds, every battlefield reshapes the map — and somewhere beyond the blood-soaked frontier lies the crimson desert where the company's true fate will be decided.",
       combat: [
         "Massive, cinematic boss fights that push the engine to its absolute limits.",
         "Fast, weighty melee combos with mounted combat across an open frontier.",
@@ -100,7 +100,7 @@
         "A living mercenary economy where reputation and coin decide your next move."
       ],
       perf: [
-        "Pearl Abyss's bespoke engine favors raw GPU grunt - keep DLSS/FSR Balanced.",
+        "Pearl Abyss's bespoke engine favors raw GPU grunt — keep DLSS/FSR Balanced.",
         "Streaming is heavy; a quality SSD materially reduces pop-in during mounted travel.",
         "Dial back ultra particle effects first if frame-rate dips in the big battles.",
         "Lock to 60 and let the engine's animation fidelity shine at 4K."
@@ -111,8 +111,8 @@
     {
       id: "2VaLOc1FpSo", start: 57, accent: "#1e88e5",
       title: "CLAIR OBSCUR: EXPEDITION 33",
-      desc: "A turn-based, story-driven RPG from Sandfall Interactive set in a haunted Belle France. Every year the Paintress awakens to paint a number that dooms that age - and you must mount Expedition 33 to end her.",
-      lore: "In a France frozen in the beauty of the Belle Epoque, the Paintress awakens each year to paint a single number - and every citizen who reaches that age is erased from existence. When the number 33 falls, the last generation able to fight decides to fight back. Expedition 33 is a desperate, cinematic journey of gorgeous melancholy and quiet defiance, where hope is measured in the years left on a clock no one can stop.",
+      desc: "A turn-based, story-driven RPG from Sandfall Interactive set in a haunted Belle Époque France. Every year the Paintress awakens to paint a number that dooms that age — and you must mount Expedition 33 to end her.",
+      lore: "In a France frozen in the beauty of the Belle Époque, the Paintress awakens each year to paint a single number — and every citizen who reaches that age is erased from existence. When the number 33 falls, the last generation able to fight decides to fight back. Expedition 33 is a desperate, cinematic journey of gorgeous melancholy and quiet defiance, where hope is measured in the years left on a clock no one can stop.",
       combat: [
         "Turn-based strategy fused with real-time dodges, parries and combo execution.",
         "A painterly momentum system that rewards bold, aggressive positioning.",
@@ -120,8 +120,8 @@
         "Boss encounters built around breathtaking, slow-burning theatrics."
       ],
       perf: [
-        "Unreal Engine 5 with Lumen - enable hardware ray tracing for the painterly light.",
-        "Nanite handles the dense Belle Epoque architecture with no LOD pop-in.",
+        "Unreal Engine 5 with Lumen — enable hardware ray tracing for the painterly light.",
+        "Nanite handles the dense Belle Époque architecture with no LOD pop-in.",
         "HDR is a must: the watercolor worlds and aurora skies are the star.",
         "Cap at 60; the cinematic combat already reads beautifully at 4K clarity."
       ],
@@ -140,7 +140,7 @@
         "Multiplatform-ready combat built for speed and spectacle alike."
       ],
       perf: [
-        "Blur and rain particles are GPU-heavy - DLSS Quality keeps 4K smooth.",
+        "Blur and rain particles are GPU-heavy — DLSS Quality keeps 4K smooth.",
         "Enable ray-traced wet reflections for the neon-soaked streets to shine.",
         "Unreal Engine 5 scales well; pair high textures with a strong GPU.",
         "Expect excellent 60fps headroom on current-gen PC hardware."
@@ -151,8 +151,8 @@
     {
       id: "lTHTfqPTQ1k", start: 35, accent: "#6a1b9a",
       title: "CONTROL RESONANT",
-      desc: "From Remedy Entertainment - the long-awaited sequel to CONTROL, arriving September 24 2026. Guide Dylan as Manhattan is reshaped and reality is redefined by a godlike paranatural force.",
-      lore: "The Oldest House was only the beginning. Now reality itself is fraying across a Manhattan that no longer plays by its own rules. Step into the boots of Dylan Faden as he searches for meaning inside a cityscape constantly rewriting itself. Resonant is Remedy at the height of its powers - conspiracy, cryptic entities and reality-warping chaos that pulls the rug from under every expectation.",
+      desc: "From Remedy Entertainment — the long-awaited sequel to CONTROL, arriving September 24 2026. Guide Dylan as Manhattan is reshaped and reality is redefined by a godlike paranatural force.",
+      lore: "The Oldest House was only the beginning. Now reality itself is fraying across a Manhattan that no longer plays by its own rules. Step into the boots of Dylan Faden as he searches for meaning inside a cityscape constantly rewriting itself. Resonant is Remedy at the height of its powers — conspiracy, cryptic entities and reality-warping chaos that pulls the rug from under every expectation.",
       combat: [
         "A Devil May Cry-esque evolution, built on mastering paranatural powers.",
         "Weave gunplay, objects and levitation into fluid, airborne combos.",
@@ -161,7 +161,7 @@
       ],
       perf: [
         "Remedy's Northlight engine shines with DLSS 3 + ray-traced global illumination.",
-        "Crowded NYC street scenes love a strong CPU - balance core/graphics settings.",
+        "Crowded NYC street scenes love a strong CPU — balance core/graphics settings.",
         "Enable HDR to sell the shifting, otherworldly light across Manhattan.",
         "An SSD keeps the surreal reality-transitions seamless and lag-free."
       ],
@@ -172,7 +172,7 @@
       id: "BoHg3zeUSWI", start: 36, accent: "#00acc1",
       title: "SPINE",
       desc: "A cinematic single-player Gun Fu action game from Nekki. Step into a cyberpunk world as street artist Redline and her sentient combat implant Spine, defying an autocratic AI regime.",
-      lore: "In a neon-drenched dystopia run by a cold autocratic AI, street artist Redline is nothing - until she finds Spine, a sentient combat implant that turns her raw fury into lethal choreography. Together they hunt the regime that took her brother, painting the city red one impossible gun-fu sequence at a time. SPINE is a kinetic, stylish love letter to the Gun Fu genre, with a partner dynamic at the heart of every fight.",
+      lore: "In a neon-drenched dystopia run by a cold autocratic AI, street artist Redline is nothing — until she finds Spine, a sentient combat implant that turns her raw fury into lethal choreography. Together they hunt the regime that took her brother, painting the city red one impossible gun-fu sequence at a time. SPINE is a kinetic, stylish love letter to the Gun Fu genre, with a partner dynamic at the heart of every fight.",
       combat: [
         "Flow-state gun fu: gunplay, martial arts and slow-mo woven into one.",
         "Partner-driven combat where Spine and Redline move as one.",
@@ -180,7 +180,7 @@
         "A stylish, brutal close-quarters system built on momentum and timing."
       ],
       perf: [
-        "Fast-paced choreography rewards locked 60fps - prefer smoothness over ultra.",
+        "Fast-paced choreography rewards locked 60fps — prefer smoothness over ultra.",
         "Motion-blur and slow-mo effects are GPU-light; keep them high for impact.",
         "Nekki's own animation tech means buttery transitions on modest hardware.",
         "HDR + high contrast settings make the neon-noir cityscape sing."
@@ -192,7 +192,7 @@
       id: "avpTgTNadh4", start: 216, accent: "#c62828",
       title: "STRANGER THAN HEAVEN",
       desc: "A fifty-year action-adventure saga from Ryu Ga Gotoku Studio and SEGA. Follow marginalized men fighting to survive and thrive as showmen across five cities and eras of modern Japan.",
-      lore: "Japan, fifty years - and the same desperate men searching for a place to call home. From the ashes of post-war streets to the neon glow of the modern era, Stranger Than Heaven chronicles the outcasts who found family in each other and a living on the stage. It is Ryu Ga Gotoku's most ambitious and emotional saga yet: brutal, funny and unapologetically human.",
+      lore: "Japan, fifty years — and the same desperate men searching for a place to call home. From the ashes of post-war streets to the neon glow of the modern era, Stranger Than Heaven chronicles the outcasts who found family in each other and a living on the stage. It is Ryu Ga Gotoku's most ambitious and emotional saga yet: brutal, funny and unapologetically human.",
       combat: [
         "Raw, extreme-melee combat fused with a music-forward showman fantasy.",
         "Five era-hopping protagonists with distinct, era-appropriate playstyles.",
@@ -212,7 +212,7 @@
       id: "SB3siHVCHpY", start: 21, accent: "#2e7d32",
       title: "THE WITCHER 3: SONGS OF THE PAST",
       desc: "The third expansion to The Witcher 3 from CD PROJEKT RED and Fool's Theory. Return to the role of Geralt of Rivia for a brand-new adventure in the land of Letten, arriving 2027.",
-      lore: "The Path calls Geralt once more - this time to the war-scarred land of Letten, where a haunting melody draws the White Wolf into a web of new quests, weathered faces and buried secrets. Songs of the Past is the long-awaited third expansion, co-developed by CD PROJEKT RED and the veterans of Fool's Theory. But the Path is never straightforward, and just below the surface of Letten's misty valleys lurks something far more sinister.",
+      lore: "The Path calls Geralt once more — this time to the war-scarred land of Letten, where a haunting melody draws the White Wolf into a web of new quests, weathered faces and buried secrets. Songs of the Past is the long-awaited third expansion, co-developed by CD PROJEKT RED and the veterans of Fool's Theory. But the Path is never straightforward, and just below the surface of Letten's misty valleys lurks something far more sinister.",
       combat: [
         "The acclaimed dark-fantasy combat, refined for new foes and systems.",
         "A deep skill/build system letting you define your own witcher.",
@@ -220,7 +220,7 @@
         "Unforgettable monster hunts that reward preparation and lore-knowledge."
       ],
       perf: [
-        "The Witcher 3 received a next-gen update - leverage ray tracing + DLSS.",
+        "The Witcher 3 received a next-gen update — leverage ray tracing + DLSS.",
         "Ultra+ textures sing at 4K; a strong GPU keeps 60fps in heavy fights.",
         "Stock settings already run great; use FSR on mid-range hardware.",
         "Mod support makes Songs of the Past endlessly replayable on PC."
@@ -239,7 +239,7 @@
     wrapper.appendChild(gridContainer);
   }
 
-  // Build every card with a persistent, preloaded (hidden) iframe - zero load delay
+  // Build every card with a persistent, preloaded (hidden) iframe — zero load delay
   gameData.forEach((g) => {
     gridContainer.insertAdjacentHTML('beforeend', `
       <div class="moment-card section" data-accent="${g.accent}" style="position:relative;width:100%;display:block;">
@@ -330,10 +330,11 @@
   const activeObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (!entry.isIntersecting) return;
-      const card = entry.target;
-      const slot = card.querySelector('.video-slot');
+      const container = entry.target;
+      const card = container.closest('.moment-card');
+      const slot = container.querySelector('.video-slot');
       const iframe = slot ? slot.querySelector('.yt-iframe') : null;
-      const accent = card.getAttribute('data-accent') || '#e53935';
+      const accent = card ? card.getAttribute('data-accent') : '#e53935';
 
       // fade this one in, others out
       document.querySelectorAll('.video-slot.is-active').forEach(s => {
@@ -357,9 +358,9 @@
         }
       }
     });
-  }, { threshold: 0.55 });
+  }, { threshold: 0.5 });
 
-  document.querySelectorAll('.moment-card').forEach(card => activeObserver.observe(card));
+  document.querySelectorAll('.video-container').forEach(vc => activeObserver.observe(vc));
 
   }
   run();

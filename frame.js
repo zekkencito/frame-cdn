@@ -294,7 +294,7 @@
 
         <div class="reveal-target" style="width:100%;">
           <h4 style="font-size:28px;color:#fff;margin-bottom:16px;text-transform:uppercase;font-weight:800;letter-spacing:0;">PC Performance Optimization</h4>
-          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:20px;">${perfItems.map(l => `<li style="flex:1 1 45%;min-width:280px;font-size:18px;line-height:1.6;color:#8A8F98;background:rgba(255,255,255,0.03);border-radius:12px;padding:18px;border-left:3px solid ${d.accent};">${l}</li>`).join('')}</ul>
+          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:20px;">${d.perf.map(l => `<li style="flex:1 1 45%;min-width:280px;font-size:18px;line-height:1.6;color:#8A8F98;background:rgba(255,255,255,0.03);border-radius:12px;padding:18px;border-left:3px solid ${d.accent};">${l}</li>`).join('')}</ul>
         </div>
 
       </div>

@@ -18,7 +18,7 @@
     .frame-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; overflow: hidden; background: #08080a; transition: background 1.4s ease; }
     .frame-canvas::before { content: ""; position: absolute; inset: 0; background: radial-gradient(1200px 800px at 80% -10%, var(--glow, rgba(229,57,53,0.16)), transparent 60%); transition: background 1.4s ease; }
 
-    .moment-card { min-height: 200vh !important; }
+    .moment-card { min-height: 200vh !important; content-visibility: auto; contain-intrinsic-size: 200vh; }
     .video-slot { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
     .video-slot.is-active { opacity: 1; pointer-events: auto; }
     .moment-card { transition: opacity 0.9s ease, transform 0.9s ease; opacity: 1; }
@@ -34,6 +34,20 @@
     .gallery-grid figure[data-index] img { --index: var(--fi, 0); }
     .gallery-grid.gallery-in img { opacity: 1; transform: translateY(0); }
     .gallery-grid.gallery-out img { opacity: 0; transform: translateY(-16px); }
+
+    /* ===== GALLERY HOVER ZOOM + LIGHTBOX ===== */
+    .gallery-grid img { cursor: pointer; transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.7s cubic-bezier(0.16,1,0.3,1); transform: translateY(30px) scale(1); will-change: transform, opacity; }
+    .gallery-grid figure { overflow: hidden; }
+    .gallery-grid.gallery-in img { opacity: 1; transform: translateY(0) scale(1); }
+    .gallery-grid.gallery-out img { opacity: 0; transform: translateY(-16px) scale(1); }
+    .gallery-grid figure:hover img { transform: translateY(0) scale(1.06); }
+    .frame-lightbox { position: fixed; inset: 0; z-index: 10000; background: rgba(6,6,8,0.95); backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.35s cubic-bezier(0.16,1,0.3,1); }
+    .frame-lightbox.is-open { opacity: 1; pointer-events: auto; }
+    .frame-lightbox figure { margin: 0; max-width: 92vw; max-height: 90vh; position: relative; }
+    .frame-lightbox img { max-width: 92vw; max-height: 90vh; width: auto; height: auto; object-fit: contain; display: block; box-shadow: 0 30px 120px rgba(0,0,0,0.85); border: 1px solid #2e2e35; }
+    .frame-lightbox .lb-close { position: absolute; top: 24px; right: 28px; background: none; border: 1px solid #3a3a42; color: #fff; font-size: 18px; width: 48px; height: 48px; cursor: pointer; transition: all 0.25s ease; z-index: 2; display: flex; align-items: center; justify-content: center; }
+    .frame-lightbox .lb-close:hover { background: #e53935; border-color: #e53935; color: #08080a; }
+    .frame-lightbox .lb-caption { position: absolute; left: 0; bottom: -44px; font-family: 'SFMono-Regular','Menlo','Consolas',monospace; font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: #8A8F98; }
 
     /* ===== BLOOD RAIN: dark neon-crimson cinematic grade ===== */
     .bloodrain .gallery-grid img { filter: brightness(0.72) contrast(1.32) saturate(1.55) drop-shadow(0 4px 22px rgba(216,27,96,0.45)) hue-rotate(-6deg); }
@@ -110,6 +124,43 @@
         active.contentWindow.postMessage('{"event":"command","func":"setVolume","args":[100]}', '*');
       }
     }, 500);
+  });
+
+  // ======================= LIGHTBOX: full-screen gallery viewer =======================
+  document.body.insertAdjacentHTML('beforeend', `
+    <div class="frame-lightbox" id="frame-lightbox" role="dialog" aria-modal="true" aria-label="Image viewer" tabindex="-1">
+      <button class="lb-close" aria-label="Close">&#10005;</button>
+      <figure><img src="" alt=""><figcaption class="lb-caption"></figcaption></figure>
+    </div>
+  `);
+  const lightbox = document.getElementById('frame-lightbox');
+  const lbImg = lightbox.querySelector('img');
+  const lbCaption = lightbox.querySelector('.lb-caption');
+
+  function openLightbox(src, caption) {
+    lbImg.src = src;
+    lbImg.alt = caption || '';
+    lbCaption.textContent = caption || '';
+    lightbox.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLightbox() {
+    lightbox.classList.remove('is-open');
+    document.body.style.overflow = '';
+  }
+  document.querySelectorAll('.gallery-grid figure').forEach(fig => {
+    fig.addEventListener('click', function(ev) {
+      ev.stopPropagation();
+      if (ev.target.tagName !== 'IMG') return;
+      openLightbox(fig.getAttribute('data-zoom'), fig.getAttribute('data-caption'));
+    });
+  });
+  lightbox.querySelector('.lb-close').addEventListener('click', closeLightbox);
+  lightbox.addEventListener('click', function(ev) {
+    if (ev.target === lightbox || ev.target === lightbox.querySelector('figure')) closeLightbox();
+  });
+  document.addEventListener('keydown', function(ev) {
+    if (ev.key === 'Escape' && lightbox.classList.contains('is-open')) closeLightbox();
   });
 
   // ======================= DATA — 9 GAMES (+ soundtrack track names) =======================
@@ -394,7 +445,7 @@
             <h4 style="font-size:13px;color:#fff;text-transform:uppercase;font-weight:700;letter-spacing:0.2em;margin:0;">The Gallery</h4>
             <span class="editorial-ghost">08 SHOTS</span>
           </div>
-          <div class="gallery-grid" data-gallery="${index}" data-gallery-idx="${index}" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:24px;display:grid;">${(d.shots||d.combat.slice(0,6).map(function(){return d.img1})).map(function(s,i){ var span=(i===0)?'grid-column:1 / -1;':'';var isize=(i===0)?'aspect-ratio:21/9;':'aspect-ratio:16/10;'; return '<figure style="margin:0;position:relative;border:1px solid #202027;--index:'+i+';" data-index="'+(i+1)+'"><img loading="lazy" src="'+s+'" alt="'+d.title+' shot '+(i+1)+'" style="width:100%;height:100%;object-fit:cover;'+isize+';display:block;'+'"><figcaption class="editorial-ghost" style="position:absolute;top:10px;left:12px;margin:0;color:#fff;mix-blend-mode:difference;">0'+(i+1)+'</figcaption></figure>';}).join('')}</div>
+          <div class="gallery-grid" data-gallery="${index}" data-gallery-idx="${index}" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:24px;display:grid;">${(d.shots||d.combat.slice(0,6).map(function(){return d.img1})).map(function(s,i){ var span=(i===0)?'grid-column:1 / -1;':'';var isize=(i===0)?'aspect-ratio:21/9;':'aspect-ratio:16/10;'; return '<figure style="margin:0;position:relative;border:1px solid #202027;--index:'+i+';" data-index="'+(i+1)+'" data-zoom="'+s+'" data-caption="'+d.title+' — Shot 0'+(i+1)+'"><img loading="lazy" decoding="async" src="'+s+'" alt="'+d.title+' shot '+(i+1)+'" style="width:100%;height:100%;object-fit:cover;'+isize+';display:block;'+'"><figcaption class="editorial-ghost" style="position:absolute;top:10px;left:12px;margin:0;color:#fff;mix-blend-mode:difference;">0'+(i+1)+'</figcaption></figure>';}).join('')}</div>
         </div>
 
       </div>
@@ -469,6 +520,17 @@
     t.iframe.contentWindow.postMessage('{"event":"command","func":"' + cmd + '","args":' + argsStr + '}', '*');
   }
 
+  // Command the section's game iframe (its cinematic score) to fully take over audio.
+  function commandGameAudio(idx) {
+    const card = document.querySelectorAll('.moment-card')[idx];
+    const slot = card ? card.querySelector('.video-slot') : null;
+    const gFrame = slot ? slot.querySelector('.yt-iframe') : null;
+    if (gFrame && gFrame.contentWindow) {
+      gFrame.contentWindow.postMessage('{"event":"command","func":"unMute","args":""}', '*');
+      gFrame.contentWindow.postMessage('{"event":"command","func":"setVolume","args":[100]}', '*');
+    }
+  }
+
   function toggleTrack(idx) {
     const t = trackFrames[idx];
     if (!t) return;
@@ -487,6 +549,8 @@
       });
       postTrack(idx, 'playVideo');
       if (audioUnlocked) postTrack(idx, 'unMute');
+      // route the section's game iframe to carry the cinematic score
+      commandGameAudio(idx);
       t.playing = true;
       t.strip.classList.add('is-playing');
     }

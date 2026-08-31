@@ -708,17 +708,17 @@
     dockEl.classList.remove('is-playing');
   }
 
-  // ZERO-OVERLAP GUARANTEE: unconditionally silence the soundtrack stream — both a
+  // ZERO-OVERLAP GUARANTEE: unconditionally silence ALL soundtrack streams — both a
   // hard pause AND a mute are pushed so no audio can bleed while a trailer is on screen.
-  function killTrackAudio(idx) {
-    const i = idx === undefined ? dock.activeIdx : idx;
-    postTrack(i, 'pauseVideo');
-    postTrack(i, 'mute');
-    if (trackFrames[i]) trackFrames[i].playing = false;
-    if (i === dock.activeIdx) {
-      dock.playing = false;
-      dockEl.classList.remove('is-playing');
-    }
+  function killTrackAudio() {
+    Object.keys(trackFrames).forEach(k => {
+      const ki = parseInt(k, 10);
+      postTrack(ki, 'pauseVideo');
+      postTrack(ki, 'mute');
+      if (trackFrames[ki]) trackFrames[ki].playing = false;
+    });
+    dock.playing = false;
+    dockEl.classList.remove('is-playing');
   }
 
   // BIDIRECTIONAL STRICT MUTE + MUTUAL EXCLUSIVITY: the instant a video trailer is
@@ -833,19 +833,22 @@
     // playVideo synchronously at the same tick opacity reaches 0->1 can drop the iframe's
     // paint layer and render a permanent black screen until a manual scroll repaints it.
     if (slot) { void slot.offsetHeight; void slot.getBoundingClientRect(); }
-    if (iframe) { iframe.style.visibility = 'hidden'; void iframe.offsetHeight; iframe.style.visibility = ''; }
+    if (iframe) { 
+      iframe.style.visibility = 'hidden'; 
+      void iframe.offsetHeight; 
+      iframe.style.visibility = ''; 
+      window.dispatchEvent(new Event('resize'));
+    }
     const paintThenPlay = function() {
-      requestAnimationFrame(function() {
-        requestAnimationFrame(function() {
-          if (iframe && iframe.contentWindow) {
-            ytPost(iframe.contentWindow, 'playVideo');
-            if (typeof audioUnlocked !== 'undefined' && audioUnlocked) {
-              ytPost(iframe.contentWindow, 'unMute');
-              ytPost(iframe.contentWindow, 'setVolume', [100]);
-            }
+      setTimeout(function() {
+        if (iframe && iframe.contentWindow) {
+          ytPost(iframe.contentWindow, 'playVideo');
+          if (typeof audioUnlocked !== 'undefined' && audioUnlocked) {
+            ytPost(iframe.contentWindow, 'unMute');
+            ytPost(iframe.contentWindow, 'setVolume', [100]);
           }
-        });
-      });
+        }
+      }, 50);
     };
     paintThenPlay();
     syncAudio();
@@ -917,7 +920,11 @@
     const g = gameData[nextIndex];
     postToFrame(slot, '{"event":"command","func":"playVideo","args":""}');
     postToFrame(slot, '{"event":"command","func":"seekTo","args":[' + (g ? g.start : 0) + ']}');
-    setTimeout(() => { postToFrame(slot, '{"event":"command","func":"pauseVideo","args":""}'); }, 1200);
+    setTimeout(() => { 
+      if (!engaged.has(nextIndex)) {
+        postToFrame(slot, '{"event":"command","func":"pauseVideo","args":""}'); 
+      }
+    }, 1200);
   }
   const prepObs = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
@@ -932,3 +939,4 @@
   }
   run();
 })();
+        

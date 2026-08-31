@@ -755,7 +755,7 @@
           }
           // no trailer on screen for this exit hand-off (unless a lower one is)
           dock.videoActive = false;
-          syncAudio();
+          if (!window.isAutoScrolling) syncAudio();
         }
         return;
       }
@@ -783,15 +783,16 @@
       syncDockState(idx);
       dock.playIntended = true;
 
-      if (iframe && iframe.contentWindow) {
-        ytPost(iframe.contentWindow, 'playVideo');
-        if (typeof audioUnlocked !== 'undefined' && audioUnlocked) {
-          ytPost(iframe.contentWindow, 'unMute');
-          ytPost(iframe.contentWindow, 'setVolume', [100]);
+      if (!window.isAutoScrolling) {
+        if (iframe && iframe.contentWindow) {
+          ytPost(iframe.contentWindow, 'playVideo');
+          if (typeof audioUnlocked !== 'undefined' && audioUnlocked) {
+            ytPost(iframe.contentWindow, 'unMute');
+            ytPost(iframe.contentWindow, 'setVolume', [100]);
+          }
         }
+        syncAudio();
       }
-
-      syncAudio();
     });
   }, { threshold: 0.5 });
 
@@ -830,16 +831,50 @@
   document.body.appendChild(arrowEl);
 
   arrowEl.addEventListener('click', function() {
+    window.isAutoScrolling = true;
+    
+    // Silence everything globally while scrolling
+    document.querySelectorAll('.yt-iframe').forEach(f => {
+       if (f && f.contentWindow) { ytPost(f.contentWindow, 'pauseVideo'); ytPost(f.contentWindow, 'mute'); }
+    });
+    
+    if (window.autoScrollTimeout) clearTimeout(window.autoScrollTimeout);
+    const scrollHandler = () => {
+      clearTimeout(window.autoScrollTimeout);
+      window.autoScrollTimeout = setTimeout(() => {
+        window.removeEventListener('scroll', scrollHandler);
+        window.isAutoScrolling = false;
+        
+        // Re-trigger the active video at the new position
+        const activeCard = document.querySelectorAll('.moment-card')[dock.activeIdx];
+        if (activeCard) {
+           const slot = activeCard.querySelector('.video-slot');
+           if (slot) {
+              const iframe = slot.querySelector('.yt-iframe');
+              if (iframe && iframe.contentWindow) {
+                 ytPost(iframe.contentWindow, 'playVideo');
+                 if (typeof audioUnlocked !== 'undefined' && audioUnlocked) {
+                    ytPost(iframe.contentWindow, 'unMute');
+                    ytPost(iframe.contentWindow, 'setVolume', [100]);
+                 }
+              }
+           }
+        }
+        syncAudio(); // restore soundtrack if needed
+      }, 150);
+    };
+    window.addEventListener('scroll', scrollHandler, { passive: true });
+
     const isAtBottom = (window.innerHeight + window.pageYOffset) >= document.body.offsetHeight - 150;
     if (isAtBottom) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       const activeCard = document.querySelectorAll('.moment-card')[dock.activeIdx];
       if (activeCard) {
-        const videoSlot = activeCard.querySelector('.editorial-hero') || activeCard;
+        const videoSlot = activeCard.querySelector('.video-container') || activeCard;
         const rect = videoSlot.getBoundingClientRect();
         const absoluteTop = window.pageYOffset + rect.top;
-        window.scrollTo({ top: absoluteTop - 40, behavior: 'smooth' });
+        window.scrollTo({ top: absoluteTop, behavior: 'smooth' });
       } else {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }

@@ -713,6 +713,7 @@
     else if (y < dock.lastY - 2) dock.scrollDir = -1;
     dock.lastY = y;
     updateDockGate();
+    syncActiveSection();
     syncAudio();
     scrollRAF = false;
   }
@@ -736,13 +737,21 @@
     dockEl.classList.toggle('is-dock-hidden', dockGated);
   }
 
-  // Tracks which sections have been engaged (so exit hand-off only triggers after audio played)
+  // ENGAGE POINT / SECTION TRACKING -----------------------------
+  // A section's audio begins the moment its game title reaches the top of the
+  // window. Instead of a fragile zero-height IntersectionObserver, this is driven
+  // directly from the scroll handler: each tick we compare the title's document
+  // position against scrollY, so the engage (and exit) is deterministic and always
+  // fires the first time — no "scroll down, scroll back up" to trigger it.
+  const sectionCards = Array.from(document.querySelectorAll('.moment-card'));
+  sectionCards.forEach(c => {
+    c.querySelectorAll('.video-slot.is-active').forEach(s => s.classList.remove('is-active'));
+  });
+  // which sections have had their audio engaged (trailer playing / videoActive)
   const engaged = new Set();
+  // offset so the "top" is reached when the title is ~just pinned under the viewport top
+  const TITLE_TOP_LINE = 12;
 
-  // ENGAGE POINT: a section's audio begins the moment its game title reaches the top
-  // of the window. We observe the title wrapper (editorial-hero) with a rootMargin
-  // that collapses the root to a 0-height line at the very top of the viewport, so the
-  // callback fires precisely when the title's top edge crosses the top of the window.
   function engageSection(idx, card, slot, iframe, accent) {
     engaged.add(idx);
     document.querySelectorAll('.video-slot.is-active').forEach(s => {
@@ -771,35 +780,45 @@
     syncAudio();
   }
 
-  const titleObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      const hero = entry.target;
-      const card = hero.closest('.moment-card');
-      const slot = card ? card.querySelector('.video-slot') : null;
-      const iframe = slot ? slot.querySelector('.yt-iframe') : null;
-      const accent = card ? card.getAttribute('data-accent') : '#e53935';
-      const idx = card ? parseInt(card.getAttribute('data-index') || '0', 10) : 0;
+  function releaseSection(idx, iframe) {
+    engaged.delete(idx);
+    if (iframe && iframe.contentWindow) {
+      ytPost(iframe.contentWindow, 'pauseVideo');
+    }
+    dock.videoActive = false;
+    syncAudio();
+  }
 
-      // TITLE AT TOP -> begin the section's audio (trailer plays, dock synced)
-      if (entry.isIntersecting && entry.boundingClientRect.top <= 0) {
-        if (!engaged.has(idx)) engageSection(idx, card, slot, iframe, accent);
-        return;
-      }
-
-      // EXIT: title cleared the top (scrolled past, or scrolled back up) -> pause the
-      // trailer and let the dock soundtrack take over
-      if (engaged.has(idx)) {
-        engaged.delete(idx);
-        if (iframe && iframe.contentWindow) {
-          ytPost(iframe.contentWindow, 'pauseVideo');
-        }
-        dock.videoActive = false;
-        syncAudio();
-      }
+  // Walk every title each scroll tick; engage the highest title that has reached
+  // the top, and release every other engaged section.
+  function syncActiveSection() {
+    const y = window.pageYOffset || 0;
+    const cur = sectionCards.map((c, i) => {
+      const hero = c.querySelector('.editorial-hero');
+      const r = hero ? hero.getBoundingClientRect() : null;
+      return { idx: i, card: c, top: r ? (r.top + y) : Infinity };
     });
-  }, { rootMargin: '0px 0px -100% 0px', threshold: [0] });
-
-  document.querySelectorAll('.editorial-hero').forEach(hero => titleObserver.observe(hero));
+    let active = -1;
+    for (let i = 0; i < cur.length; i++) {
+      if (cur[i].top - TITLE_TOP_LINE <= y) { active = i; }
+    }
+    // --- release any previously-engaged section that is no longer the active one ---
+    const toRelease = Array.from(engaged).filter(idx => idx !== active);
+    toRelease.forEach(idx => {
+      const c = sectionCards[idx];
+      const slot = c ? c.querySelector('.video-slot') : null;
+      const iframe = slot ? slot.querySelector('.yt-iframe') : null;
+      releaseSection(idx, iframe);
+    });
+    // --- engage the active one if not already ---
+    if (active !== -1 && !engaged.has(active)) {
+      const c = sectionCards[active];
+      const slot = c.querySelector('.video-slot');
+      const iframe = slot ? slot.querySelector('.yt-iframe') : null;
+      const accent = c.getAttribute('data-accent') || '#e53935';
+      engageSection(active, c, slot, iframe, accent);
+    }
+  }
 
   // ======================= PREDICTIVE N+1 PRE-LOAD (instant video, zero lag) =======================
   function postToFrame(container, payload) {

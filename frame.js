@@ -618,7 +618,8 @@
     volume: 90,
     lastY: window.pageYOffset || 0,
     scrollDir: 1,        // 1 = forward (down), -1 = backward (up)
-    videoActive: false   // true while the active section's trailer is on screen
+    videoActive: false,  // true while the active section's trailer is on screen
+    globalSilence: false // strict unconditional silence state for soundtracks
   };
 
   document.querySelectorAll('.moment-card').forEach((card, idx) => {
@@ -682,6 +683,7 @@
   }
 
   function dockPlay() {
+    if (dock.globalSilence) return;
     // single-source playback: pause every other section stream
     Object.keys(trackFrames).forEach(k => {
       const ki = parseInt(k, 10);
@@ -711,6 +713,7 @@
   // ZERO-OVERLAP GUARANTEE: unconditionally silence ALL soundtrack streams — both a
   // hard pause AND a mute are pushed so no audio can bleed while a trailer is on screen.
   function killTrackAudio() {
+    dock.globalSilence = true;
     Object.keys(trackFrames).forEach(k => {
       const ki = parseInt(k, 10);
       postTrack(ki, 'pauseVideo');
@@ -732,6 +735,7 @@
       killTrackAudio();
       return;
     }
+    dock.globalSilence = false;
     const blocked = dock.scrollDir === -1;
     if (blocked) {
       if (dock.playing) dockPause();
@@ -840,15 +844,17 @@
       window.dispatchEvent(new Event('resize'));
     }
     const paintThenPlay = function() {
-      setTimeout(function() {
-        if (iframe && iframe.contentWindow) {
-          ytPost(iframe.contentWindow, 'playVideo');
-          if (typeof audioUnlocked !== 'undefined' && audioUnlocked) {
-            ytPost(iframe.contentWindow, 'unMute');
-            ytPost(iframe.contentWindow, 'setVolume', [100]);
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+          if (iframe && iframe.contentWindow) {
+            ytPost(iframe.contentWindow, 'playVideo');
+            if (typeof audioUnlocked !== 'undefined' && audioUnlocked) {
+              ytPost(iframe.contentWindow, 'unMute');
+              ytPost(iframe.contentWindow, 'setVolume', [100]);
+            }
           }
-        }
-      }, 50);
+        });
+      });
     };
     paintThenPlay();
     syncAudio();
@@ -939,4 +945,3 @@
   }
   run();
 })();
-        

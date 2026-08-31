@@ -599,6 +599,9 @@
     <input class="dock-fader" type="range" min="0" max="100" value="90" aria-label="Volume">
     <span class="dock-vol">90</span>
   `;
+  // DOCK GATE: the floating dock starts hidden and only appears once the user scrolls
+  // past the first hero video (PRAGMATA) — never before.
+  dockEl.classList.add('is-dock-hidden');
   document.body.appendChild(dockEl);
   const dockPlayBtn = dockEl.querySelector('.dock-play');
   const dockTitle = dockEl.querySelector('.dock-title');
@@ -709,6 +712,7 @@
     if (y > dock.lastY + 2) dock.scrollDir = 1;
     else if (y < dock.lastY - 2) dock.scrollDir = -1;
     dock.lastY = y;
+    updateDockGate();
     syncAudio();
     scrollRAF = false;
   }
@@ -717,67 +721,85 @@
   }
   document.addEventListener('scroll', onScroll, { passive: true });
 
-  // Tracks which sections have ever been walked (so exit hand-off only triggers after video played)
-  const everActive = new Set();
+  // DOCK GATE: the dock stays hidden while the first hero video (PRAGMATA) is on
+  // screen; the instant that video's bottom edge clears the top of the window the
+  // dock glides in. It never appears before then.
+  let dockGated = true;
+  const firstCard = document.querySelector('.moment-card');
+  const firstVidEdge = firstCard ? firstCard.querySelector('.video-container') : null;
+  function updateDockGate() {
+    if (!dockGated) return;
+    if (firstVidEdge) {
+      const r = firstVidEdge.getBoundingClientRect();
+      if (r.bottom <= 0) dockGated = false; // scrolled past the first video
+    }
+    dockEl.classList.toggle('is-dock-hidden', dockGated);
+  }
 
-  const activeObserver = new IntersectionObserver((entries) => {
+  // Tracks which sections have been engaged (so exit hand-off only triggers after audio played)
+  const engaged = new Set();
+
+  // ENGAGE POINT: a section's audio begins the moment its game title reaches the top
+  // of the window. We observe the title wrapper (editorial-hero) with a rootMargin
+  // that collapses the root to a 0-height line at the very top of the viewport, so the
+  // callback fires precisely when the title's top edge crosses the top of the window.
+  function engageSection(idx, card, slot, iframe, accent) {
+    engaged.add(idx);
+    document.querySelectorAll('.video-slot.is-active').forEach(s => {
+      if (s !== slot) {
+        s.classList.remove('is-active');
+        const f = s.querySelector('.yt-iframe');
+        if (f && f.contentWindow) ytPost(f.contentWindow, 'pauseVideo');
+      }
+    });
+    if (slot) slot.classList.add('is-active');
+    document.querySelectorAll('.moment-card').forEach((c, ci) => {
+      if (ci < idx) c.classList.add('dimmed');
+      else c.classList.remove('dimmed');
+    });
+    shiftBackground(accent);
+    dock.videoActive = true;
+    syncDockState(idx);
+    dock.playIntended = true;
+    if (iframe && iframe.contentWindow) {
+      ytPost(iframe.contentWindow, 'playVideo');
+      if (typeof audioUnlocked !== 'undefined' && audioUnlocked) {
+        ytPost(iframe.contentWindow, 'unMute');
+        ytPost(iframe.contentWindow, 'setVolume', [100]);
+      }
+    }
+    syncAudio();
+  }
+
+  const titleObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-      const container = entry.target;
-      const card = container.closest('.moment-card');
-      const slot = container.querySelector('.video-slot');
+      const hero = entry.target;
+      const card = hero.closest('.moment-card');
+      const slot = card ? card.querySelector('.video-slot') : null;
       const iframe = slot ? slot.querySelector('.yt-iframe') : null;
       const accent = card ? card.getAttribute('data-accent') : '#e53935';
       const idx = card ? parseInt(card.getAttribute('data-index') || '0', 10) : 0;
 
-      // ---------- EXIT: trailer scrolled past -> pause video, dock soundtrack takes over ----------
-      if (!entry.isIntersecting) {
-        if (everActive.has(idx)) {
-          if (iframe && iframe.contentWindow) {
-            ytPost(iframe.contentWindow, 'pauseVideo');
-          }
-          // no trailer on screen for this exit hand-off (unless a lower one is)
-          dock.videoActive = false;
-          syncAudio();
-        }
+      // TITLE AT TOP -> begin the section's audio (trailer plays, dock synced)
+      if (entry.isIntersecting && entry.boundingClientRect.top <= 0) {
+        if (!engaged.has(idx)) engageSection(idx, card, slot, iframe, accent);
         return;
       }
 
-      everActive.add(idx);
-
-      document.querySelectorAll('.video-slot.is-active').forEach(s => {
-        if (s !== slot) {
-          s.classList.remove('is-active');
-          const f = s.querySelector('.yt-iframe');
-          if (f && f.contentWindow) ytPost(f.contentWindow, 'pauseVideo');
+      // EXIT: title cleared the top (scrolled past, or scrolled back up) -> pause the
+      // trailer and let the dock soundtrack take over
+      if (engaged.has(idx)) {
+        engaged.delete(idx);
+        if (iframe && iframe.contentWindow) {
+          ytPost(iframe.contentWindow, 'pauseVideo');
         }
-      });
-      if (slot) slot.classList.add('is-active');
-
-      document.querySelectorAll('.moment-card').forEach((c, ci) => {
-        if (ci < idx) c.classList.add('dimmed');
-        else c.classList.remove('dimmed');
-      });
-
-      shiftBackground(accent);
-
-      // trailer is now active & on-screen -> strictly mute the dock during overlap
-      dock.videoActive = true;
-      syncDockState(idx);
-      dock.playIntended = true;
-
-      if (iframe && iframe.contentWindow) {
-        ytPost(iframe.contentWindow, 'playVideo');
-        if (typeof audioUnlocked !== 'undefined' && audioUnlocked) {
-          ytPost(iframe.contentWindow, 'unMute');
-          ytPost(iframe.contentWindow, 'setVolume', [100]);
-        }
+        dock.videoActive = false;
+        syncAudio();
       }
-
-      syncAudio();
     });
-  }, { threshold: 0.5 });
+  }, { rootMargin: '0px 0px -100% 0px', threshold: [0] });
 
-  document.querySelectorAll('.video-container').forEach(vc => activeObserver.observe(vc));
+  document.querySelectorAll('.editorial-hero').forEach(hero => titleObserver.observe(hero));
 
   // ======================= PREDICTIVE N+1 PRE-LOAD (instant video, zero lag) =======================
   function postToFrame(container, payload) {

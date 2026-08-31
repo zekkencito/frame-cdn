@@ -140,6 +140,20 @@
     }
     @media (prefers-reduced-motion: reduce) { .frame-dock.is-playing .dock-wave i { animation: none; } }
 
+    /* ===== FLOATING SCROLL ARROW ===== */
+    .frame-scroll-arrow {
+      position: fixed; right: 32px; bottom: 32px; width: 52px; height: 52px;
+      border-radius: 50%; background: rgba(15,15,19,0.66); border: 1px solid rgba(255,255,255,0.15);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      z-index: 9500; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.3s ease;
+      color: #fff;
+    }
+    .frame-scroll-arrow:hover { background: var(--accent, #e53935); border-color: var(--accent, #e53935); color: #08080a; transform: translateY(-4px); }
+    .frame-scroll-arrow svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    @media (max-width: 767px) {
+      .frame-scroll-arrow { right: 16px; bottom: 80px; width: 44px; height: 44px; }
+    }
   </style>`);
 
   // 0. Dynamic cinematic background canvas (fixed, behind everything)
@@ -807,6 +821,38 @@
     });
   }, { threshold: 0.5 });
   document.querySelectorAll('.gallery-grid').forEach(gg => prepObs.observe(gg));
+
+  // ======================= SCROLL ARROW (Dynamic Navigation) =======================
+  const arrowEl = document.createElement('button');
+  arrowEl.className = 'frame-scroll-arrow';
+  arrowEl.setAttribute('aria-label', 'Scroll navigation');
+  arrowEl.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>`;
+  document.body.appendChild(arrowEl);
+
+  arrowEl.addEventListener('click', function() {
+    const isAtBottom = (window.innerHeight + window.pageYOffset) >= document.body.offsetHeight - 150;
+    if (isAtBottom) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      const activeCard = document.querySelectorAll('.moment-card')[dock.activeIdx];
+      if (activeCard) {
+        const videoSlot = activeCard.querySelector('.editorial-hero') || activeCard;
+        const rect = videoSlot.getBoundingClientRect();
+        const absoluteTop = window.pageYOffset + rect.top;
+        window.scrollTo({ top: absoluteTop - 40, behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  });
+  
+  const origSyncDock = syncDockState;
+  syncDockState = function(idx) {
+    origSyncDock(idx);
+    const g = gameData[idx] || gameData[0];
+    if (arrowEl) arrowEl.style.setProperty('--accent', g.accent || '#e53935');
+  };
+  arrowEl.style.setProperty('--accent', gameData[0].accent || '#e53935');
 
   }
   run();

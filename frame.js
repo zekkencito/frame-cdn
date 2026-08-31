@@ -383,7 +383,7 @@
       shots: ["https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4260840/f65464e2f5e566b75133e70b66835eaa1426b346/ss_f65464e2f5e566b75133e70b66835eaa1426b346.1920x1080.jpg?t=1787806014", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4260840/b5e06a575d1056516057e17f5480df5469025eab/ss_b5e06a575d1056516057e17f5480df5469025eab.1920x1080.jpg?t=1787806014", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4260840/34f79225201d7b3101c919ff4f54f6b3a66d7997/ss_34f79225201d7b3101c919ff4f54f6b3a66d7997.1920x1080.jpg?t=1787806014", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4260840/7bba5e7ff5f318e7e53aba322b45a4b47b69aecc/ss_7bba5e7ff5f318e7e53aba322b45a4b47b69aecc.1920x1080.jpg?t=1787806014", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4260840/3e647a8f13db648173828e0ab5f98361b3695617/ss_3e647a8f13db648173828e0ab5f98361b3695617.1920x1080.jpg?t=1787806014", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4260840/fa52330262734f26bca624c886fbd50ab0995dc1/ss_fa52330262734f26bca624c886fbd50ab0995dc1.1920x1080.jpg?t=1787806014", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4260840/4d4cd5c94d9a0bd645bbbf2a484626260bb8ee20/ss_4d4cd5c94d9a0bd645bbbf2a484626260bb8ee20.1920x1080.jpg?t=1787806014", "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4260840/dde75984ccd7f1a6c957174b23cd4344bd0dbe44/ss_dde75984ccd7f1a6c957174b23cd4344bd0dbe44.1920x1080.jpg?t=1787806014"]
     },
     {
-      id: "SB3siHVCHpY", start: 21, music: "viM0-3PXef0", musicStart: 26, gif: GIF_BASE + "6a94d3e6aff21b4a39b4ca9f_frame-witcher.gif", accent: "#2e7d32", track: "The Witcher 3: Songs of the Past — Lets Play",
+      id: "SB3siHVCHpY", start: 21, music: "viM0-3PXef0", musicStart: 26, gif: GIF_BASE + "6a94d3e6aff21b4a39b4ca9f_frame-witcher.gif", accent: "#2e7d32", track: "The Witcher 3: Sons of the Past — Lets Play",
       title: "THE WITCHER 3: SONGS OF THE PAST",
       desc: "The third expansion to The Witcher 3 from CD PROJEKT RED and Fool's Theory. Return to the role of Geralt of Rivia for a brand-new adventure in the land of Letten, arriving 2027.",
       lore: "The Path calls Geralt once more — this time to the war-scarred land of Letten, where a haunting melody draws the White Wolf into a web of new quests, weathered faces and buried secrets. Songs of the Past is the long-awaited third expansion, co-developed by CD PROJEKT RED and the veterans of Fool's Theory. But the Path is never straightforward, and just below the surface of Letten's misty valleys lurks something far more sinister.",
@@ -455,3 +455,293 @@
           </div>
         </div>
       `);
+
+    const combatItems = d.combat.map((l, i) => `<li style="display:flex;gap:18px;align-items:baseline;padding:15px 0;border-bottom:1px solid #1f1f24;"><span class="editorial-ghost" style="flex:0 0 34px;">0${i+1}</span><span style="font-size:17px;line-height:1.6;color:#cfcfd5;">${l}</span></li>`).join('');
+
+    card.insertAdjacentHTML('beforeend', `
+      <div class="game-info" data-accent="${d.accent}" style="display:flex;flex-direction:column;gap:0;padding:110px 5% 40px;max-width:1400px;margin:0 auto;width:100%;">
+
+        <!-- EDITORIAL HERO: sharp framed header, left rail accent -->
+        <div class="reveal-target editorial-hero" style="--index:0;width:100%;border-left:2px solid ${d.accent};padding-left:32px;margin-bottom:16px;">
+          <p class="editorial-kicker" style="margin:0 0 22px;">FRAME / 0${index+1} // FEATURED</p>
+          <h3 style="font-size:clamp(52px,7.5vw,116px);line-height:0.92;margin:0 0 26px;color:#fff;font-weight:900;text-transform:uppercase;letter-spacing:-0.03em;">${d.title}</h3>
+          <p style="font-size:clamp(17px,1.6vw,22px);line-height:1.65;color:#b9b9c3;max-width:820px;margin:0;">${d.desc}</p>
+        </div>
+        <div class="reveal-target editorial-rule accent" style="--index:1;width:100%;margin-bottom:26px;"></div>
+
+        <div class="reveal-target" style="--index:2;width:100%;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:48px;align-items:start;margin-bottom:90px;">
+          <div style="min-width:0;border-top:1px solid #26262b;">
+            <img src="${d.img1}" style="width:100%;display:block;object-fit:cover;aspect-ratio:16/9;filter:grayscale(12%) contrast(108%);">
+            <div class="editorial-rule" style="width:100%;"></div>
+            <p class="editorial-ghost" style="margin:10px 0 0;text-align:right;">CAP.01 — SHOT 0${index+1}</p>
+          </div>
+          <div style="min-width:0;">
+            <p class="editorial-kicker" style="margin:0 0 18px;">The Lore</p>
+            <p style="font-size:17px;line-height:1.85;color:#cfcfd5;margin:0;">${d.lore}</p>
+          </div>
+        </div>
+
+        <div class="reveal-target" style="--index:3;width:100%;display:grid;grid-template-columns:1fr;gap:0;margin-bottom:90px;border-top:1px solid #26262b;">
+          <p class="editorial-kicker" style="margin:26px 0 6px;">Combat System</p>
+          <ul style="list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:56px;">
+            ${combatItems}
+          </ul>
+        </div>
+
+        <div class="reveal-target" style="--index:4;width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin-bottom:90px;border-top:1px solid #26262b;">
+          ${d.perf.map((l, i) => `<div class="perf-cell" style="padding:22px 18px;border-right:1px solid #232329;${i===0?'border-left:1px solid #232329;':''}"><p class="editorial-ghost" style="margin:0 0 12px;">PERF.0${i+1}</p><p style="font-size:14px;line-height:1.6;color:#9a9aa4;margin:0;">${l}</p></div>`).join('')}
+        </div>
+
+        <div class="reveal-target" style="--index:5;width:100%;margin-bottom:40px;">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid #26262b;padding-bottom:16px;">
+            <h4 style="font-size:13px;color:#fff;text-transform:uppercase;font-weight:700;letter-spacing:0.2em;margin:0;">The Gallery</h4>
+            <span class="editorial-ghost">08 SHOTS</span>
+          </div>
+          <div class="gallery-grid" data-gallery="${index}" data-gallery-idx="${index}" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:24px;display:grid;">${(d.gif?'<figure style="margin:0;position:relative;border:1px solid #202027;grid-column:1 / -1;--index:0;" data-zoom="'+d.gif+'" data-caption="'+d.title+' — Motion Loop"><img loading="lazy" decoding="async" src="'+d.gif+'" alt="'+d.title+' motion loop" style="width:100%;height:100%;object-fit:cover;aspect-ratio:21/9;display:block;"><figcaption class="editorial-ghost" style="position:absolute;top:10px;left:12px;margin:0;color:#fff;mix-blend-mode:difference;">MOTION</figcaption></figure>':'')}${(d.shots||d.combat.slice(0,6).map(function(){return d.img1})).map(function(s,i){ var span=(i===0)?'grid-column:1 / -1;':'';var isize=(i===0)?'aspect-ratio:21/9;':'aspect-ratio:16/10;'; return '<figure style="margin:0;position:relative;border:1px solid #202027;--index:'+(i+1)+';" data-index="'+(i+1)+'" data-zoom="'+s+'" data-caption="'+d.title+' — Shot 0'+(i+1)+'"><img loading="lazy" decoding="async" src="'+s+'" alt="'+d.title+' shot '+(i+1)+'" style="width:100%;height:100%;object-fit:cover;'+isize+';display:block;'+'"><figcaption class="editorial-ghost" style="position:absolute;top:10px;left:12px;margin:0;color:#fff;mix-blend-mode:difference;">0'+(i+1)+'</figcaption></figure>';}).join('')}</div>
+        </div>
+
+      </div>
+    `);
+  });
+
+  // ======================= STAGGERED CASCADE OBSERVER (IN & OUT) =======================
+  const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        entry.target.classList.remove('is-leaving');
+      } else {
+        entry.target.classList.add('is-leaving');
+        entry.target.classList.remove('is-visible');
+      }
+    });
+  }, { rootMargin: '-20% 0px -20% 0px' });
+  document.querySelectorAll('.reveal-target').forEach(el => revealObs.observe(el));
+
+  // Gallery stagger: each image inherits --index from its figure; drive in/out on the grid
+  const galleryObs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const grid = entry.target;
+      if (entry.isIntersecting) {
+        grid.classList.add('gallery-in');
+        grid.classList.remove('gallery-out');
+      } else {
+        grid.classList.add('gallery-out');
+        grid.classList.remove('gallery-in');
+      }
+    });
+  }, { rootMargin: '-20% 0px -20% 0px' });
+  document.querySelectorAll('.gallery-grid').forEach(gg => galleryObs.observe(gg));
+
+  // ======================= ZERO-LAG VIDEO SWITCHING + DYNAMIC BG + SECTION-LOCKED SOUNDTRACK =======================
+  const canvas = document.getElementById('frame-canvas');
+
+  function hexToRgba(hex, a) {
+    const h = hex.replace('#', '');
+    const r = parseInt(h.substring(0,2), 16), g = parseInt(h.substring(2,4), 16), b = parseInt(h.substring(4,6), 16);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function shiftBackground(accent) {
+    if (!canvas) return;
+    canvas.style.cssText = `--glow:${hexToRgba(accent, 0.2)};`;
+    canvas.style.background = `radial-gradient(1200px 800px at 80% -10%, ${hexToRgba(accent, 0.32)}, transparent 60%), radial-gradient(1000px 700px at 10% 110%, #11131f, transparent 60%)`;
+  }
+
+  // --- Soundtrack helpers ---
+  const trackFrames = {};  // data-card -> { iframe, strip }
+  // Brings the hidden track iframe into a visible on-screen player so YouTube's
+  // autoplay policy treats its audio commands as explicit (post-gesture) playback.
+  function promoteTrackIframe(t) {
+    t.iframe.classList.add('is-live');
+  }
+  document.querySelectorAll('.track-deck').forEach(strip => {
+    const idx = parseInt(strip.getAttribute('data-track') || '0', 10);
+    const g = gameData[idx];
+    const f = document.createElement('iframe');
+    f.className = 'track-iframe';
+    f.setAttribute('allow', 'autoplay');
+    f.title = 'Soundtrack player';
+    f.src = `https://www.youtube.com/embed/${g.music}?autoplay=0&mute=1&controls=0&enablejsapi=1&playlist=${g.music}&loop=1&start=${g.musicStart}`;
+    document.body.appendChild(f);
+    trackFrames[idx] = { iframe: f, strip: strip, playing: false, armed: false };
+    strip.querySelector('.track-play').addEventListener('click', function(ev) {
+      ev.stopPropagation();
+      toggleTrack(idx);
+    });
+    // The labeled PLAY OST button is the explicit, always-visible click surface that
+    // satisfies the browser's user-activation requirement for unMute/playVideo.
+    strip.querySelector('.track-activate').addEventListener('click', function(ev) {
+      ev.stopPropagation();
+      toggleTrack(idx);
+    });
+  });
+
+  // Route an audio command to the track iframe through the correct target origin.
+  function postTrack(idx, cmd, args) {
+    const t = trackFrames[idx];
+    if (!t || !t.iframe.contentWindow) return false;
+    return ytPost(t.iframe.contentWindow, cmd, args);
+  }
+
+  // Command the section's game iframe (its cinematic score) to fully take over audio.
+  function commandGameAudio(idx) {
+    const card = document.querySelectorAll('.moment-card')[idx];
+    const slot = card ? card.querySelector('.video-slot') : null;
+    const gFrame = slot ? slot.querySelector('.yt-iframe') : null;
+    if (gFrame && gFrame.contentWindow) {
+      ytPost(gFrame.contentWindow, 'unMute');
+      ytPost(gFrame.contentWindow, 'setVolume', [100]);
+    }
+  }
+
+  function toggleTrack(idx) {
+    const t = trackFrames[idx];
+    if (!t) return;
+    if (t.playing) {
+      postTrack(idx, 'pauseVideo');
+      t.playing = false;
+      t.strip.classList.remove('is-playing');
+    } else {
+      // Pause any other playing track, then promote THIS track's iframe to a visible
+      // on-screen player and start it. Promotion on top of a direct click is what lets
+      // YouTube honor playVideo/unMute under modern autoplay restrictions.
+      Object.keys(trackFrames).forEach(k => {
+        if (k != idx && trackFrames[k].playing) {
+          postTrack(parseInt(k,10), 'pauseVideo');
+          trackFrames[k].playing = false;
+          trackFrames[k].strip.classList.remove('is-playing');
+        }
+      });
+      promoteTrackIframe(t);
+      postTrack(idx, 'playVideo');
+      postTrack(idx, 'unMute');
+      postTrack(idx, 'setVolume', 100);
+      // route the section's game iframe to carry the cinematic score
+      commandGameAudio(idx);
+      t.playing = true;
+      t.strip.classList.add('is-playing');
+    }
+  }
+
+  // Section-locking: drive msgs from the same active observer
+  function resignTrack(idx) {
+    Object.keys(trackFrames).forEach(k => {
+      const t = trackFrames[k];
+      const ki = parseInt(k, 10);
+      if (ki === idx) {
+        t.strip.classList.add('is-active');
+        t.armed = true;
+      } else {
+        t.strip.classList.remove('is-active');
+        if (t.playing) { postTrack(ki, 'pauseVideo'); t.playing = false; t.strip.classList.remove('is-playing'); }
+        t.armed = false;
+      }
+    });
+  }
+
+  // Tracks which sections have ever been walked (so exit hand-off only triggers after video played)
+  const everActive = new Set();
+
+  const activeObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const container = entry.target;
+      const card = container.closest('.moment-card');
+      const slot = container.querySelector('.video-slot');
+      const iframe = slot ? slot.querySelector('.yt-iframe') : null;
+      const accent = card ? card.getAttribute('data-accent') : '#e53935';
+      const idx = card ? parseInt(card.getAttribute('data-index') || '0', 10) : 0;
+
+      // ---------- HANDS-OFF: video exits view -> pause video, soundtrack takes over ----------
+      if (!entry.isIntersecting) {
+        if (everActive.has(idx)) {
+          // pause the video now that it's scrolled past
+          if (iframe && iframe.contentWindow) {
+            ytPost(iframe.contentWindow, 'pauseVideo');
+          }
+          // soundtrack cleanly takes over, playing continuously for this section
+          if (typeof audioUnlocked !== 'undefined' && audioUnlocked && trackFrames[idx] && !trackFrames[idx].playing) {
+            Object.keys(trackFrames).forEach(k => {
+              const ki = parseInt(k, 10);
+              if (ki !== idx && trackFrames[ki].playing) {
+                postTrack(ki, 'pauseVideo');
+                trackFrames[ki].playing = false;
+                trackFrames[ki].strip.classList.remove('is-playing');
+              }
+            });
+            if (trackFrames[idx] && !trackFrames[idx].iframe.classList.contains('is-live')) {
+              trackFrames[idx].iframe.classList.add('is-live');
+            }
+            postTrack(idx, 'playVideo');
+            postTrack(idx, 'unMute');
+            postTrack(idx, 'setVolume', 100);
+            trackFrames[idx].playing = true;
+            trackFrames[idx].strip.classList.add('is-playing');
+            trackFrames[idx].strip.classList.add('is-active');
+            trackFrames[idx].armed = true;
+          }
+        }
+        return;
+      }
+
+      everActive.add(idx);
+
+      document.querySelectorAll('.video-slot.is-active').forEach(s => {
+        if (s !== slot) {
+          s.classList.remove('is-active');
+          const f = s.querySelector('.yt-iframe');
+          if (f && f.contentWindow) ytPost(f.contentWindow, 'pauseVideo');
+        }
+      });
+      if (slot) slot.classList.add('is-active');
+
+      document.querySelectorAll('.moment-card').forEach((c, ci) => {
+        if (ci < idx) c.classList.add('dimmed');
+        else c.classList.remove('dimmed');
+      });
+
+      shiftBackground(accent);
+
+      if (iframe && iframe.contentWindow) {
+        ytPost(iframe.contentWindow, 'playVideo');
+        if (typeof audioUnlocked !== 'undefined' && audioUnlocked) {
+          ytPost(iframe.contentWindow, 'unMute');
+          ytPost(iframe.contentWindow, 'setVolume', [100]);
+        }
+      }
+
+      // SECTION-LOCKED SOUNDTRACK: arm this section's player; pause track of prior section for takeover
+      resignTrack(idx);
+    });
+  }, { threshold: 0.5 });
+
+  document.querySelectorAll('.video-container').forEach(vc => activeObserver.observe(vc));
+
+  // ======================= PREDICTIVE N+1 PRE-LOAD (instant video, zero lag) =======================
+  function postToFrame(container, payload) {
+    const f = container ? container.querySelector('.yt-iframe') : null;
+    if (f && f.contentWindow) f.contentWindow.postMessage(payload, YT_ORIGIN);
+  }
+  function prepNext(nextIndex) {
+    if (nextIndex >= gameData.length) nextIndex = 0;
+    const target = document.querySelectorAll('.moment-card')[nextIndex];
+    const slot = target ? target.querySelector('.video-slot') : null;
+    if (!slot) return;
+    const g = gameData[nextIndex];
+    postToFrame(slot, '{"event":"command","func":"playVideo","args":""}');
+    postToFrame(slot, '{"event":"command","func":"seekTo","args":[' + (g ? g.start : 0) + ']}');
+    setTimeout(() => { postToFrame(slot, '{"event":"command","func":"pauseVideo","args":""}'); }, 1200);
+  }
+  const prepObs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const idx = parseInt(entry.target.getAttribute('data-gallery-idx') || '0', 10);
+        prepNext(idx + 1);
+      }
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('.gallery-grid').forEach(gg => prepObs.observe(gg));
+
+  }
+  run();
+})();

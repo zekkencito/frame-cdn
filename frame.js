@@ -12,29 +12,48 @@
   // readiness flag (set by YouTube's onReady/infoDelivery handshake), queue commands
   // that arrive too early, and flush them the moment the player signals ready (with a
   // bounded 2.5s fallback so nothing is ever permanently dropped).
+  //
+  // NOTE: readiness/queues are tracked in PAGE-LOCAL memory (Set/Map keyed by the
+  // cross-origin contentWindow reference), NEVER as properties written/read on the
+  // cross-origin window itself. Cross-origin Windows only expose a few allowed
+  // members (postMessage foremost); synchronously reading an arbitrary property like
+  // `win.__ytReady` throws a SecurityError and would abort the whole scroll/audio
+  // sync chain. State therefore lives here, and all we ever do to the iframe window
+  // is call the cross-origin-safe postMessage().
   var YT_ORIGIN = 'https://www.youtube.com';
+  var ytReadyWins = new Set();   // contentWindows that have confirmed the proxy bridge
+  var ytQueues = new Map();      // contentWindow -> array of deferred payloads
+  var ytTimers = new Map();      // contentWindow -> 2.5s fallback flush timer id
   function ytSend(win, payload) {
     if (!win) return false;
     try { win.postMessage(JSON.stringify(payload), YT_ORIGIN); return true; }
     catch (e) { return false; }
   }
   function ytFlush(win) {
-    if (!win || !win.__ytQueue) return;
-    var q = win.__ytQueue;
-    win.__ytQueue = null;
+    if (!win || !ytQueues.has(win)) return;
+    var q = ytQueues.get(win);
+    ytQueues.delete(win);
     for (var i = 0; i < q.length; i++) ytSend(win, q[i]);
+  }
+  function ytMarkReady(win) {
+    if (!win) return;
+    ytReadyWins.add(win);
+    if (ytTimers.has(win)) { clearTimeout(ytTimers.get(win)); ytTimers.delete(win); }
+    ytFlush(win);
   }
   function ytPost(targetWin, func, args) {
     if (!targetWin) return false;
     var payload = { event: 'command', func: func, args: args === undefined ? '' : args };
-    if (targetWin.__ytReady) return ytSend(targetWin, payload);
+    if (ytReadyWins.has(targetWin)) return ytSend(targetWin, payload);
     // Player not confirmed ready yet: defer the command until the handshake fires.
-    (targetWin.__ytQueue = targetWin.__ytQueue || []).push(payload);
-    if (!targetWin.__ytFlushTimer) {
-      targetWin.__ytFlushTimer = setTimeout(function() {
-        targetWin.__ytReady = true;
+    if (!ytQueues.has(targetWin)) ytQueues.set(targetWin, []);
+    ytQueues.get(targetWin).push(payload);
+    if (!ytTimers.has(targetWin)) {
+      ytTimers.set(targetWin, setTimeout(function() {
+        ytReadyWins.add(targetWin);
+        if (ytTimers.has(targetWin)) { clearTimeout(ytTimers.get(targetWin)); ytTimers.delete(targetWin); }
         ytFlush(targetWin);
-      }, 2500);
+      }, 2500));
     }
     return true;
   }
@@ -46,8 +65,7 @@
     var msg = null;
     try { msg = JSON.parse(raw); } catch (e) { return; }
     if (msg && (msg.event === 'onReady' || msg.event === 'infoDelivery')) {
-      var win = ev.source;
-      if (win) { win.__ytReady = true; ytFlush(win); }
+      ytMarkReady(ev.source);
     }
   });
 
@@ -860,17 +878,18 @@
   function postToFrame(container, payload) {
     const f = container ? container.querySelector('.yt-iframe') : null;
     if (!f || !f.contentWindow) return;
-    // Same readiness gating as ytPost so preload commands never hit the PlayerProxy race.
+    // Same readiness gating as ytPost (page-local Set/Map) so preload commands never
+    // hit the PlayerProxy race and never read cross-origin window properties.
     const win = f.contentWindow;
-    if (win.__ytReady) { try { win.postMessage(payload, YT_ORIGIN); } catch (e) {} return; }
-    win.__ytQueue = win.__ytQueue || [];
-    win.__ytQueue.push(payload);
-    if (!win.__ytFlushTimer) {
-      win.__ytFlushTimer = setTimeout(function() {
-        win.__ytReady = true;
-        const q = win.__ytQueue; win.__ytQueue = null;
-        if (q) for (let i = 0; i < q.length; i++) { try { win.postMessage(q[i], YT_ORIGIN); } catch (e) {} }
-      }, 2500);
+    if (ytReadyWins.has(win)) { try { win.postMessage(payload, YT_ORIGIN); } catch (e) {} return; }
+    if (!ytQueues.has(win)) ytQueues.set(win, []);
+    ytQueues.get(win).push(payload);
+    if (!ytTimers.has(win)) {
+      ytTimers.set(win, setTimeout(function() {
+        ytReadyWins.add(win);
+        if (ytTimers.has(win)) { clearTimeout(ytTimers.get(win)); ytTimers.delete(win); }
+        ytFlush(win);
+      }, 2500));
     }
   }
   function prepNext(nextIndex) {

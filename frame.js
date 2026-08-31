@@ -116,9 +116,18 @@
     .frame-dock .dock-fader::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); border: none; box-shadow: 0 0 0 4px rgba(255,255,255,0.06); }
     .frame-dock .dock-fader::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); border: none; }
     .frame-dock .dock-vol { font-family:'SFMono-Regular','Menlo','Consolas',monospace; font-size: 10px; letter-spacing: 0.12em; color: #9a9aa4; min-width: 30px; text-align: right; }
-    /* the promoted VISIBLE player (YouTube unlocks audio only while rendered on-screen) */
-    .track-iframe { position: fixed; left: -9999px; top: 0; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; border: 0; transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease; }
-    .track-iframe.is-live { position: fixed; left: auto; right: 18px; bottom: 18px; width: 320px; height: 180px; opacity: 1; pointer-events: auto; z-index: 9001; border: 1px solid #2e2e35; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 70px rgba(0,0,0,0.7); }
+    /* ABSOLUTE HIDING: soundtrack iframes are fully detached from layout and never
+       visible — YouTube must never render its info-card / mini-player on screen.
+       They stay in the DOM for zero-lag audio, but contribute zero pixels. */
+    .track-iframe,
+    .track-iframe.is-live {
+      position: absolute !important; left: -9999px !important; top: -9999px !important;
+      width: 0 !important; height: 0 !important; min-width: 0 !important; min-height: 0 !important;
+      max-width: 0 !important; max-height: 0 !important; opacity: 0 !important;
+      pointer-events: none !important; border: 0 !important; visibility: hidden !important;
+      overflow: hidden !important; clip: rect(0 0 0 0) !important; clip-path: inset(50%) !important;
+      display: block !important; margin: 0 !important; padding: 0 !important;
+    }
     @media (max-width: 767px) {
       .frame-dock { padding: 10px 14px; gap: 10px; bottom: 12px; }
       .frame-dock .dock-fader { flex-basis: 64px; }
@@ -127,7 +136,7 @@
       .frame-dock .dock-wave { display: none; }
       .frame-dock .dock-label { display: none; }
       .frame-dock .dock-vol { display: none; }
-      .track-iframe.is-live { right: 0; bottom: 0; width: 100%; height: 56vw; border-radius: 0; border: 0; }
+      .track-iframe, .track-iframe.is-live { display: block !important; width: 0 !important; height: 0 !important; }
     }
     @media (prefers-reduced-motion: reduce) { .frame-dock.is-playing .dock-wave i { animation: none; } }
 
@@ -562,7 +571,7 @@
     f.className = 'track-iframe';
     f.setAttribute('allow', 'autoplay');
     f.title = 'Soundtrack player';
-    f.src = `https://www.youtube.com/embed/${g.music}?autoplay=0&mute=1&controls=0&enablejsapi=1&playlist=${g.music}&loop=1&start=${g.musicStart}`;
+    f.src = `https://www.youtube.com/embed/${g.music}?autoplay=0&mute=1&controls=0&enablejsapi=1&playlist=${g.music}&loop=1&start=${g.musicStart}&playsinline=1&iv_load_policy=3&modestbranding=1`;
     document.body.appendChild(f);
     trackFrames[idx] = { iframe: f, playing: false };
   });
@@ -633,16 +642,38 @@
 
   function dockPause() {
     postTrack(dock.activeIdx, 'pauseVideo');
+    // hard-mute too: guarantee this soundtrack contributes zero audio right now
+    postTrack(dock.activeIdx, 'mute');
     if (trackFrames[dock.activeIdx]) trackFrames[dock.activeIdx].playing = false;
     dock.playing = false;
     dockEl.classList.remove('is-playing');
   }
 
-  // BIDIRECTIONAL STRICT MUTE: if the user scrolls backward, or a trailer is on
-  // screen, the soundtrack is force-paused — never allowed to overlap video audio.
+  // ZERO-OVERLAP GUARANTEE: unconditionally silence the soundtrack stream — both a
+  // hard pause AND a mute are pushed so no audio can bleed while a trailer is on screen.
+  function killTrackAudio(idx) {
+    const i = idx === undefined ? dock.activeIdx : idx;
+    postTrack(i, 'pauseVideo');
+    postTrack(i, 'mute');
+    if (trackFrames[i]) trackFrames[i].playing = false;
+    if (i === dock.activeIdx) {
+      dock.playing = false;
+      dockEl.classList.remove('is-playing');
+    }
+  }
+
+  // BIDIRECTIONAL STRICT MUTE + MUTUAL EXCLUSIVITY: the instant a video trailer is
+  // active (videoActive === true) the soundtrack is hard-paused AND muted — the two
+  // streams can NEVER overlap. Soundtrack resumes ONLY when no trailer is on screen,
+  // the user is not scrolling backward, and the user is listening via the dock.
   function syncAudio() {
     if (typeof audioUnlocked === 'undefined' || !audioUnlocked) return;
-    const blocked = dock.scrollDir === -1 || dock.videoActive;
+    // hard mutual-exclusivity gate: trailer on screen -> soundtrack must be silent
+    if (dock.videoActive) {
+      killTrackAudio();
+      return;
+    }
+    const blocked = dock.scrollDir === -1;
     if (blocked) {
       if (dock.playing) dockPause();
     } else if (dock.playIntended) {

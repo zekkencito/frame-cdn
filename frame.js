@@ -87,8 +87,10 @@
     .frame-canvas::before { content: ""; position: absolute; inset: 0; background: radial-gradient(1200px 800px at 80% -10%, var(--glow, rgba(229,57,53,0.16)), transparent 60%); transition: background 1.4s ease; }
 
     .moment-card { min-height: 200vh !important; content-visibility: auto; contain-intrinsic-size: 200vh; }
-    .video-slot { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
-    .video-slot.is-active { opacity: 1; pointer-events: auto; }
+    .video-slot { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; transition: opacity 0.35s ease; transform: translateZ(0); backface-visibility: hidden; will-change: opacity, transform; -webkit-transform: translateZ(0); -webkit-backface-visibility: hidden; }
+    .video-slot.is-active { opacity: 1; pointer-events: auto; transform: translateZ(0); }
+    .video-slot .yt-iframe { backface-visibility: hidden; will-change: transform; -webkit-backface-visibility: hidden; }
+    .video-slot.is-active .yt-iframe { transform: translate3d(-50%,-50%,0); }
     .moment-card { transition: opacity 0.9s ease, transform 0.9s ease; opacity: 1; }
     .moment-card.dimmed { opacity: 0.3; }
 
@@ -485,7 +487,7 @@
       <div class="moment-card section${g.bloodRain ? ' bloodrain' : ''}" data-accent="${g.accent}" data-index="${gameData.indexOf(g)}" style="position:relative;width:100%;display:block;">
         <div class="video-container" style="height:85vh;position:relative;clip-path:polygon(10% 0,100% 0,90% 100%,0 100%);">
           <div class="video-slot">
-            <iframe class="yt-iframe" title="${g.title}" src="https://www.youtube.com/embed/${g.id}?autoplay=0&mute=1&controls=0&loop=1&playlist=${g.id}&start=${g.start}&enablejsapi=1" allow="autoplay; fullscreen" style="position:absolute;top:50%;left:50%;width:130vw;height:130vh;transform:translate(-50%,-50%);border:0;"></iframe>
+            <iframe class="yt-iframe" title="${g.title}" src="https://www.youtube.com/embed/${g.id}?autoplay=0&mute=1&controls=0&loop=1&playlist=${g.id}&start=${g.start}&enablejsapi=1" allow="autoplay; fullscreen" style="position:absolute;top:50%;left:50%;width:130vw;height:130vh;transform:translate3d(-50%,-50%,0);transform:translate(-50%,-50%) translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;border:0;"></iframe>
           </div>
         </div>
       </div>
@@ -824,13 +826,28 @@
     dock.videoActive = true;
     syncDockState(idx);
     dock.playIntended = true;
-    if (iframe && iframe.contentWindow) {
-      ytPost(iframe.contentWindow, 'playVideo');
-      if (typeof audioUnlocked !== 'undefined' && audioUnlocked) {
-        ytPost(iframe.contentWindow, 'unMute');
-        ytPost(iframe.contentWindow, 'setVolume', [100]);
-      }
-    }
+    // INSTANT VIDEO RENDER / BLACK-SCREEN FIX: force a synchronous layout reflow on
+    // the freshly-activated slot (reading layout metrics forces the browser to recompute
+    // and promote the compositor layer), THEN fire playVideo on the next paint frame
+    // (double-rAF) so the first visible frame is painted before playback starts. Sending
+    // playVideo synchronously at the same tick opacity reaches 0->1 can drop the iframe's
+    // paint layer and render a permanent black screen until a manual scroll repaints it.
+    if (slot) { void slot.offsetHeight; void slot.getBoundingClientRect(); }
+    if (iframe) { iframe.style.visibility = 'hidden'; void iframe.offsetHeight; iframe.style.visibility = ''; }
+    const paintThenPlay = function() {
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+          if (iframe && iframe.contentWindow) {
+            ytPost(iframe.contentWindow, 'playVideo');
+            if (typeof audioUnlocked !== 'undefined' && audioUnlocked) {
+              ytPost(iframe.contentWindow, 'unMute');
+              ytPost(iframe.contentWindow, 'setVolume', [100]);
+            }
+          }
+        });
+      });
+    };
+    paintThenPlay();
     syncAudio();
   }
 

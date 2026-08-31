@@ -5,69 +5,15 @@
   // Every audio command must be sent over the POST-MESSAGE channel with the correct
   // target origin, and only from a trusted user-activation context. This helper is the
   // single chokepoint so we never scatter '*' (origin-agnostic) sends.
-  //
-  // PlayerProxy handshake: YouTube throws a "PlayerProxy error in method call" when a
-  // postMessage command arrives before the embedded player has finished building its
-  // internal proxy bridge. To avoid that race we gate every command on a per-window
-  // readiness flag (set by YouTube's onReady/infoDelivery handshake), queue commands
-  // that arrive too early, and flush them the moment the player signals ready (with a
-  // bounded 2.5s fallback so nothing is ever permanently dropped).
-  //
-  // NOTE: readiness/queues are tracked in PAGE-LOCAL memory (Set/Map keyed by the
-  // cross-origin contentWindow reference), NEVER as properties written/read on the
-  // cross-origin window itself. Cross-origin Windows only expose a few allowed
-  // members (postMessage foremost); synchronously reading an arbitrary property like
-  // `win.__ytReady` throws a SecurityError and would abort the whole scroll/audio
-  // sync chain. State therefore lives here, and all we ever do to the iframe window
-  // is call the cross-origin-safe postMessage().
   var YT_ORIGIN = 'https://www.youtube.com';
-  var ytReadyWins = new Set();   // contentWindows that have confirmed the proxy bridge
-  var ytQueues = new Map();      // contentWindow -> array of deferred payloads
-  var ytTimers = new Map();      // contentWindow -> 2.5s fallback flush timer id
-  function ytSend(win, payload) {
-    if (!win) return false;
-    try { win.postMessage(JSON.stringify(payload), YT_ORIGIN); return true; }
-    catch (e) { return false; }
-  }
-  function ytFlush(win) {
-    if (!win || !ytQueues.has(win)) return;
-    var q = ytQueues.get(win);
-    ytQueues.delete(win);
-    for (var i = 0; i < q.length; i++) ytSend(win, q[i]);
-  }
-  function ytMarkReady(win) {
-    if (!win) return;
-    ytReadyWins.add(win);
-    if (ytTimers.has(win)) { clearTimeout(ytTimers.get(win)); ytTimers.delete(win); }
-    ytFlush(win);
-  }
   function ytPost(targetWin, func, args) {
     if (!targetWin) return false;
     var payload = { event: 'command', func: func, args: args === undefined ? '' : args };
-    if (ytReadyWins.has(targetWin)) return ytSend(targetWin, payload);
-    // Player not confirmed ready yet: defer the command until the handshake fires.
-    if (!ytQueues.has(targetWin)) ytQueues.set(targetWin, []);
-    ytQueues.get(targetWin).push(payload);
-    if (!ytTimers.has(targetWin)) {
-      ytTimers.set(targetWin, setTimeout(function() {
-        ytReadyWins.add(targetWin);
-        if (ytTimers.has(targetWin)) { clearTimeout(ytTimers.get(targetWin)); ytTimers.delete(targetWin); }
-        ytFlush(targetWin);
-      }, 2500));
-    }
-    return true;
+    try {
+      targetWin.postMessage(JSON.stringify(payload), YT_ORIGIN);
+      return true;
+    } catch (e) { return false; }
   }
-  // Mark each embedded player ready the moment YouTube signals it, then flush any
-  // commands that were deferred while the proxy bridge was still initializing.
-  document.addEventListener('message', function(ev) {
-    var raw = ev.data;
-    if (!raw || typeof raw !== 'string') return;
-    var msg = null;
-    try { msg = JSON.parse(raw); } catch (e) { return; }
-    if (msg && (msg.event === 'onReady' || msg.event === 'infoDelivery')) {
-      ytMarkReady(ev.source);
-    }
-  });
 
   // 0a. INSTANT YOUTUBE PRELOADER: preconnect network handshakes
   ['https://www.youtube.com', 'https://www.google.com', 'https://shared.akamai.steamstatic.com', 'https://i.ytimg.com'].forEach(function(h){
@@ -87,10 +33,8 @@
     .frame-canvas::before { content: ""; position: absolute; inset: 0; background: radial-gradient(1200px 800px at 80% -10%, var(--glow, rgba(229,57,53,0.16)), transparent 60%); transition: background 1.4s ease; }
 
     .moment-card { min-height: 200vh !important; content-visibility: auto; contain-intrinsic-size: 200vh; }
-    .video-slot { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; transition: opacity 0.35s ease; transform: translateZ(0); backface-visibility: hidden; will-change: opacity, transform; -webkit-transform: translateZ(0); -webkit-backface-visibility: hidden; }
-    .video-slot.is-active { opacity: 1; pointer-events: auto; transform: translateZ(0); }
-    .video-slot .yt-iframe { backface-visibility: hidden; will-change: transform; -webkit-backface-visibility: hidden; }
-    .video-slot.is-active .yt-iframe { transform: translate3d(-50%,-50%,0); }
+    .video-slot { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
+    .video-slot.is-active { opacity: 1; pointer-events: auto; }
     .moment-card { transition: opacity 0.9s ease, transform 0.9s ease; opacity: 1; }
     .moment-card.dimmed { opacity: 0.3; }
 
@@ -487,7 +431,7 @@
       <div class="moment-card section${g.bloodRain ? ' bloodrain' : ''}" data-accent="${g.accent}" data-index="${gameData.indexOf(g)}" style="position:relative;width:100%;display:block;">
         <div class="video-container" style="height:85vh;position:relative;clip-path:polygon(10% 0,100% 0,90% 100%,0 100%);">
           <div class="video-slot">
-            <iframe class="yt-iframe" title="${g.title}" src="https://www.youtube.com/embed/${g.id}?autoplay=0&mute=1&controls=0&loop=1&playlist=${g.id}&start=${g.start}&enablejsapi=1" allow="autoplay; fullscreen" style="position:absolute;top:50%;left:50%;width:130vw;height:130vh;transform:translate3d(-50%,-50%,0);transform:translate(-50%,-50%) translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;border:0;"></iframe>
+            <iframe class="yt-iframe" title="${g.title}" src="https://www.youtube.com/embed/${g.id}?autoplay=0&mute=1&controls=0&loop=1&playlist=${g.id}&start=${g.start}&enablejsapi=1" allow="autoplay; fullscreen" style="position:absolute;top:50%;left:50%;width:130vw;height:130vh;transform:translate(-50%,-50%);border:0;"></iframe>
           </div>
         </div>
       </div>
@@ -656,9 +600,6 @@
     <input class="dock-fader" type="range" min="0" max="100" value="90" aria-label="Volume">
     <span class="dock-vol">90</span>
   `;
-  // DOCK GATE: the floating dock starts hidden and only appears once the user scrolls
-  // past the first hero video (PRAGMATA) — never before.
-  dockEl.classList.add('is-dock-hidden');
   document.body.appendChild(dockEl);
   const dockPlayBtn = dockEl.querySelector('.dock-play');
   const dockTitle = dockEl.querySelector('.dock-title');
@@ -710,7 +651,7 @@
     dockEl.classList.remove('is-playing');
   }
 
-  // ZERO-OVERLAP GUARANTEE: unconditionally silence ALL soundtrack streams — both a
+  // ZERO-OVERLAP GUARANTEE: unconditionally silence the soundtrack stream — both a
   // hard pause AND a mute are pushed so no audio can bleed while a trailer is on screen.
   function killTrackAudio() {
     dock.globalSilence = true;
@@ -772,8 +713,6 @@
     if (y > dock.lastY + 2) dock.scrollDir = 1;
     else if (y < dock.lastY - 2) dock.scrollDir = -1;
     dock.lastY = y;
-    updateDockGate();
-    syncActiveSection();
     syncAudio();
     scrollRAF = false;
   }
@@ -782,141 +721,72 @@
   }
   document.addEventListener('scroll', onScroll, { passive: true });
 
-  // DOCK GATE: the dock stays hidden while the first hero video (PRAGMATA) is on
-  // screen; the instant that video's bottom edge clears the top of the window the
-  // dock glides in. It never appears before then.
-  let dockGated = true;
-  const firstCard = document.querySelector('.moment-card');
-  const firstVidEdge = firstCard ? firstCard.querySelector('.video-container') : null;
-  function updateDockGate() {
-    if (!dockGated) return;
-    if (firstVidEdge) {
-      const r = firstVidEdge.getBoundingClientRect();
-      if (r.bottom <= 0) dockGated = false; // scrolled past the first video
-    }
-    dockEl.classList.toggle('is-dock-hidden', dockGated);
-  }
+  // Tracks which sections have ever been walked (so exit hand-off only triggers after video played)
+  const everActive = new Set();
 
-  // ENGAGE POINT / SECTION TRACKING -----------------------------
-  // A section's audio begins the moment its game title reaches the top of the
-  // window. Instead of a fragile zero-height IntersectionObserver, this is driven
-  // directly from the scroll handler: each tick we compare the title's document
-  // position against scrollY, so the engage (and exit) is deterministic and always
-  // fires the first time — no "scroll down, scroll back up" to trigger it.
-  const sectionCards = Array.from(document.querySelectorAll('.moment-card'));
-  sectionCards.forEach(c => {
-    c.querySelectorAll('.video-slot.is-active').forEach(s => s.classList.remove('is-active'));
-  });
-  // which sections have had their audio engaged (trailer playing / videoActive)
-  const engaged = new Set();
-  // offset so the "top" is reached when the title is ~just pinned under the viewport top
-  const TITLE_TOP_LINE = 12;
+  const activeObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const container = entry.target;
+      const card = container.closest('.moment-card');
+      const slot = container.querySelector('.video-slot');
+      const iframe = slot ? slot.querySelector('.yt-iframe') : null;
+      const accent = card ? card.getAttribute('data-accent') : '#e53935';
+      const idx = card ? parseInt(card.getAttribute('data-index') || '0', 10) : 0;
 
-  function engageSection(idx, card, slot, iframe, accent) {
-    engaged.add(idx);
-    document.querySelectorAll('.video-slot.is-active').forEach(s => {
-      if (s !== slot) {
-        s.classList.remove('is-active');
-        const f = s.querySelector('.yt-iframe');
-        if (f && f.contentWindow) ytPost(f.contentWindow, 'pauseVideo');
-      }
-    });
-    if (slot) slot.classList.add('is-active');
-    document.querySelectorAll('.moment-card').forEach((c, ci) => {
-      if (ci < idx) c.classList.add('dimmed');
-      else c.classList.remove('dimmed');
-    });
-    shiftBackground(accent);
-    dock.videoActive = true;
-    syncDockState(idx);
-    dock.playIntended = true;
-    // INSTANT VIDEO RENDER / BLACK-SCREEN FIX: force a synchronous layout reflow on
-    // the freshly-activated slot (reading layout metrics forces the browser to recompute
-    // and promote the compositor layer), THEN fire playVideo on the next paint frame
-    // (double-rAF) so the first visible frame is painted before playback starts. Sending
-    // playVideo synchronously at the same tick opacity reaches 0->1 can drop the iframe's
-    // paint layer and render a permanent black screen until a manual scroll repaints it.
-    if (slot) { void slot.offsetHeight; void slot.getBoundingClientRect(); }
-    if (iframe) { 
-      iframe.style.visibility = 'hidden'; 
-      void iframe.offsetHeight; 
-      iframe.style.visibility = ''; 
-      window.dispatchEvent(new Event('resize'));
-    }
-    const paintThenPlay = function() {
-      requestAnimationFrame(function() {
-        requestAnimationFrame(function() {
+      // ---------- EXIT: trailer scrolled past -> pause video, dock soundtrack takes over ----------
+      if (!entry.isIntersecting) {
+        if (everActive.has(idx)) {
           if (iframe && iframe.contentWindow) {
-            ytPost(iframe.contentWindow, 'playVideo');
-            if (typeof audioUnlocked !== 'undefined' && audioUnlocked) {
-              ytPost(iframe.contentWindow, 'unMute');
-              ytPost(iframe.contentWindow, 'setVolume', [100]);
-            }
+            ytPost(iframe.contentWindow, 'pauseVideo');
           }
-        });
+          // no trailer on screen for this exit hand-off (unless a lower one is)
+          dock.videoActive = false;
+          syncAudio();
+        }
+        return;
+      }
+
+      everActive.add(idx);
+
+      document.querySelectorAll('.video-slot.is-active').forEach(s => {
+        if (s !== slot) {
+          s.classList.remove('is-active');
+          const f = s.querySelector('.yt-iframe');
+          if (f && f.contentWindow) ytPost(f.contentWindow, 'pauseVideo');
+        }
       });
-    };
-    paintThenPlay();
-    syncAudio();
-  }
+      if (slot) slot.classList.add('is-active');
 
-  function releaseSection(idx, iframe) {
-    engaged.delete(idx);
-    if (iframe && iframe.contentWindow) {
-      ytPost(iframe.contentWindow, 'pauseVideo');
-    }
-    dock.videoActive = false;
-    syncAudio();
-  }
+      document.querySelectorAll('.moment-card').forEach((c, ci) => {
+        if (ci < idx) c.classList.add('dimmed');
+        else c.classList.remove('dimmed');
+      });
 
-  // Walk every title each scroll tick; engage the highest title that has reached
-  // the top, and release every other engaged section.
-  function syncActiveSection() {
-    const y = window.pageYOffset || 0;
-    const cur = sectionCards.map((c, i) => {
-      const hero = c.querySelector('.editorial-hero');
-      const r = hero ? hero.getBoundingClientRect() : null;
-      return { idx: i, card: c, top: r ? (r.top + y) : Infinity };
+      shiftBackground(accent);
+
+      // trailer is now active & on-screen -> strictly mute the dock during overlap
+      dock.videoActive = true;
+      syncDockState(idx);
+      dock.playIntended = true;
+
+      if (iframe && iframe.contentWindow) {
+        ytPost(iframe.contentWindow, 'playVideo');
+        if (typeof audioUnlocked !== 'undefined' && audioUnlocked) {
+          ytPost(iframe.contentWindow, 'unMute');
+          ytPost(iframe.contentWindow, 'setVolume', [100]);
+        }
+      }
+
+      syncAudio();
     });
-    let active = -1;
-    for (let i = 0; i < cur.length; i++) {
-      if (cur[i].top - TITLE_TOP_LINE <= y) { active = i; }
-    }
-    // --- release any previously-engaged section that is no longer the active one ---
-    const toRelease = Array.from(engaged).filter(idx => idx !== active);
-    toRelease.forEach(idx => {
-      const c = sectionCards[idx];
-      const slot = c ? c.querySelector('.video-slot') : null;
-      const iframe = slot ? slot.querySelector('.yt-iframe') : null;
-      releaseSection(idx, iframe);
-    });
-    // --- engage the active one if not already ---
-    if (active !== -1 && !engaged.has(active)) {
-      const c = sectionCards[active];
-      const slot = c.querySelector('.video-slot');
-      const iframe = slot ? slot.querySelector('.yt-iframe') : null;
-      const accent = c.getAttribute('data-accent') || '#e53935';
-      engageSection(active, c, slot, iframe, accent);
-    }
-  }
+  }, { threshold: 0.5 });
+
+  document.querySelectorAll('.video-container').forEach(vc => activeObserver.observe(vc));
 
   // ======================= PREDICTIVE N+1 PRE-LOAD (instant video, zero lag) =======================
   function postToFrame(container, payload) {
     const f = container ? container.querySelector('.yt-iframe') : null;
-    if (!f || !f.contentWindow) return;
-    // Same readiness gating as ytPost (page-local Set/Map) so preload commands never
-    // hit the PlayerProxy race and never read cross-origin window properties.
-    const win = f.contentWindow;
-    if (ytReadyWins.has(win)) { try { win.postMessage(payload, YT_ORIGIN); } catch (e) {} return; }
-    if (!ytQueues.has(win)) ytQueues.set(win, []);
-    ytQueues.get(win).push(payload);
-    if (!ytTimers.has(win)) {
-      ytTimers.set(win, setTimeout(function() {
-        ytReadyWins.add(win);
-        if (ytTimers.has(win)) { clearTimeout(ytTimers.get(win)); ytTimers.delete(win); }
-        ytFlush(win);
-      }, 2500));
-    }
+    if (f && f.contentWindow) f.contentWindow.postMessage(payload, YT_ORIGIN);
   }
   function prepNext(nextIndex) {
     if (nextIndex >= gameData.length) nextIndex = 0;
@@ -926,11 +796,7 @@
     const g = gameData[nextIndex];
     postToFrame(slot, '{"event":"command","func":"playVideo","args":""}');
     postToFrame(slot, '{"event":"command","func":"seekTo","args":[' + (g ? g.start : 0) + ']}');
-    setTimeout(() => { 
-      if (!engaged.has(nextIndex)) {
-        postToFrame(slot, '{"event":"command","func":"pauseVideo","args":""}'); 
-      }
-    }, 1200);
+    setTimeout(() => { postToFrame(slot, '{"event":"command","func":"pauseVideo","args":""}'); }, 1200);
   }
   const prepObs = new IntersectionObserver((entries) => {
     entries.forEach(entry => {

@@ -75,60 +75,62 @@
     .editorial-ghost { font-family: 'SFMono-Regular','Menlo','Consolas',monospace; font-size: 12px; letter-spacing: 0.2em; color: #2c2c33; text-transform: uppercase; }
     .perf-cell { border: 1px solid #232329; background: transparent; border-radius: 0; }
 
-    /* ===== SOUNDTRACK DECK: animated music player, massive breathing room below the video ===== */
-    .track-deck { position: relative; display: flex; align-items: center; gap: 28px; margin: 110px auto 60px; padding: 34px 38px; max-width: 1200px; width: 100%; background: linear-gradient(135deg, rgba(255,255,255,0.035), rgba(255,255,255,0.006)); border: 1px solid #232329; opacity: 0.55; transition: opacity 0.6s ease, border-color 0.6s ease, transform 0.6s ease; overflow: hidden; }
-    .track-deck::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(460px 130px at 6% 0%, rgba(255,255,255,0.07), transparent 60%); }
-    .track-deck::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform 0.8s cubic-bezier(0.16,1,0.3,1); opacity: 0.6; }
-    .track-deck.is-active { opacity: 1; border-color: #2e2e35; transform: translateY(-2px); }
-    .track-deck.is-active::after { transform: scaleX(1); }
-    .track-deck .track-play { width: 54px; height: 54px; flex: 0 0 54px; border: 1px solid #3a3a42; background: #101015; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all 0.25s ease; border-radius: 50%; position: relative; z-index: 1; }
-    .track-deck.is-active .track-play { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
-    .track-deck .track-play:hover { background: var(--accent); border-color: var(--accent); color: #08080a; }
-    .track-deck .track-meta { display: flex; flex-direction: column; gap: 4px; min-width: 0; position: relative; z-index: 1; }
-    .track-deck .track-label { font-family: 'SFMono-Regular','Menlo','Consolas',monospace; font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: #7a7a82; }
-    .track-deck .track-name { font-size: 19px; font-weight: 800; letter-spacing: 0.02em; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    /* waveform / pulse equalizer visual */
-    .track-wave { display: flex; align-items: center; gap: 3px; height: 44px; margin-left: auto; position: relative; z-index: 1; }
-    .track-wave i { width: 4px; height: 100%; display: block; background: var(--accent); opacity: 0.28; transform: scaleY(0.35); transition: opacity 0.4s ease; }
-    .track-deck.is-active .track-wave i { opacity: 0.7; }
-    .track-deck.is-playing .track-wave i { animation: wave 1s ease-in-out infinite; }
-    .track-deck.is-playing .track-wave i:nth-child(2n) { animation-delay: 0.1s; }
-    .track-deck.is-playing .track-wave i:nth-child(3n) { animation-delay: 0.2s; }
-    .track-deck.is-playing .track-wave i:nth-child(4n) { animation-delay: 0.3s; }
-    .track-deck.is-playing .track-wave i:nth-child(5n) { animation-delay: 0.4s; }
-    .track-deck.is-playing .track-wave i:nth-child(7n) { animation-delay: 0.5s; }
-    @keyframes wave { 0%,100% { transform: scaleY(0.25); } 50% { transform: scaleY(1); } }
-    @media (prefers-reduced-motion: reduce) { .track-deck.is-playing .track-wave i { animation: none; } }
-
-    /* ===== ROBUST AUDIO: explicit PLAY OST activation button =====
-       The soundtrack uses YouTube's IFrame API. Modern autoplay policy only honors
-       unMute/playVideo when (a) the command ships from a real user click and (b) the
-       player iframe is rendered on-screen (not a hidden 1px ghost). This labeled button
-       is the guaranteed-on-click activation surface, and the .is-live class promotes the
-       hidden track iframe to a visible inline player so YouTube unlocks audio. */
-    .track-deck .track-cta { margin-left: auto; display: flex; align-items: center; gap: 18px; position: relative; z-index: 1; }
-    .track-deck .track-activate {
-      font-family: 'SFMono-Regular','Menlo','Consolas',monospace; font-size: 10px; font-weight: 700;
-      letter-spacing: 0.28em; text-transform: uppercase; color: #fff; background: transparent;
-      border: 1px solid #3a3a42; padding: 13px 22px; cursor: pointer; transition: all 0.25s ease;
-      display: inline-flex; align-items: center; gap: 10px; white-space: nowrap;
+    /* ===== GLOBAL FLOATING STICKY AUDIO DOCK: glassmorphism bar synced to active section ===== */
+    .frame-dock {
+      position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+      z-index: 9000; display: flex; align-items: center; gap: 16px;
+      padding: 12px 18px; min-width: min(680px, 92vw); max-width: 92vw;
+      background: rgba(15,15,19,0.66); border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 20px; backdrop-filter: blur(22px) saturate(150%);
+      -webkit-backdrop-filter: blur(22px) saturate(150%);
+      box-shadow: 0 18px 60px rgba(0,0,0,0.62), inset 0 1px 0 rgba(255,255,255,0.06);
+      transition: transform 0.5s cubic-bezier(0.16,1,0.3,1), opacity 0.4s ease;
+      opacity: 1;
     }
-    .track-deck .track-activate:hover { border-color: var(--accent); color: var(--accent); background: rgba(255,255,255,0.03); }
-    .track-deck.is-playing .track-activate { border-color: var(--accent); color: #08080a; background: var(--accent); }
-    .track-deck .track-activate .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 rgba(229,57,53,0.6); }
-    .track-deck.is-playing .track-activate .dot { box-shadow: 0 0 0 0 rgba(229,57,53,0); animation: pulse 1.6s ease-out infinite; }
-    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(229,57,53,0.6); } 70% { box-shadow: 0 0 0 10px rgba(229,57,53,0); } 100% { box-shadow: 0 0 0 0 rgba(229,57,53,0); } }
-    /* the hidden 1px ghost is promoted to a real visible inline player only after the user clicks PLAY OST */
+    .frame-dock.is-dock-hidden { transform: translateX(-50%) translateY(140%); opacity: 0; }
+    .frame-dock .dock-play {
+      width: 52px; height: 52px; flex: 0 0 52px; border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.05);
+      color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.25s ease; position: relative;
+    }
+    .frame-dock .dock-play:hover { background: var(--accent); border-color: var(--accent); color: #08080a; }
+    .frame-dock .dock-play .ico-play, .frame-dock .dock-play .ico-pause { position: absolute; line-height: 1; transition: opacity 0.2s ease, transform 0.2s ease; }
+    .frame-dock .dock-play .ico-pause { opacity: 0; transform: scale(0.6); }
+    .frame-dock.is-playing .dock-play .ico-play { opacity: 0; transform: scale(0.6); }
+    .frame-dock.is-playing .dock-play .ico-pause { opacity: 1; transform: scale(1); }
+    .frame-dock .dock-meta { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+    .frame-dock .dock-label { font-family:'SFMono-Regular','Menlo','Consolas',monospace; font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; color: #8A8F98; }
+    .frame-dock .dock-title { font-size: 15px; font-weight: 800; letter-spacing: 0.02em; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .frame-dock .dock-wave { display: flex; align-items: center; gap: 3px; height: 30px; }
+    .frame-dock .dock-wave i { width: 4px; height: 100%; display: block; background: var(--accent); opacity: 0.28; transform: scaleY(0.3); transition: opacity 0.4s ease; }
+    .frame-dock.is-feeding .dock-wave i { opacity: 0.7; }
+    .frame-dock.is-playing .dock-wave i { animation: wave 1s ease-in-out infinite; }
+    .frame-dock.is-playing .dock-wave i:nth-child(2n) { animation-delay: 0.1s; }
+    .frame-dock.is-playing .dock-wave i:nth-child(3n) { animation-delay: 0.2s; }
+    .frame-dock.is-playing .dock-wave i:nth-child(4n) { animation-delay: 0.3s; }
+    .frame-dock.is-playing .dock-wave i:nth-child(5n) { animation-delay: 0.4s; }
+    .frame-dock.is-playing .dock-wave i:nth-child(7n) { animation-delay: 0.5s; }
+    @keyframes wave { 0%,100% { transform: scaleY(0.22); } 50% { transform: scaleY(1); } }
+    .frame-dock .dock-fader { flex: 0 0 110px; height: 4px; -webkit-appearance: none; appearance: none; background: rgba(255,255,255,0.16); border-radius: 999px; outline: none; cursor: pointer; }
+    .frame-dock .dock-fader::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); border: none; box-shadow: 0 0 0 4px rgba(255,255,255,0.06); }
+    .frame-dock .dock-fader::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); border: none; }
+    .frame-dock .dock-vol { font-family:'SFMono-Regular','Menlo','Consolas',monospace; font-size: 10px; letter-spacing: 0.12em; color: #9a9aa4; min-width: 30px; text-align: right; }
+    /* the promoted VISIBLE player (YouTube unlocks audio only while rendered on-screen) */
     .track-iframe { position: fixed; left: -9999px; top: 0; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; border: 0; transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease; }
-    .track-iframe.is-live { position: fixed; left: auto; right: 18px; bottom: 18px; width: 300px; height: 169px; opacity: 1; pointer-events: auto; z-index: 5000; border: 1px solid #2e2e35; box-shadow: 0 20px 70px rgba(0,0,0,0.7); }
-    @media (max-width: 767px) { .track-iframe.is-live { right: 0; bottom: 0; width: 100%; height: 56vw; border: 0; } }
-
+    .track-iframe.is-live { position: fixed; left: auto; right: 18px; bottom: 18px; width: 320px; height: 180px; opacity: 1; pointer-events: auto; z-index: 9001; border: 1px solid #2e2e35; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 70px rgba(0,0,0,0.7); }
     @media (max-width: 767px) {
-      .track-deck { margin: 72px auto 40px; padding: 26px 20px; gap: 20px; }
-      .track-deck .track-name { max-width: 46vw; font-size: 16px; }
-      .track-wave { height: 34px; gap: 2px; }
-      .track-wave i { width: 3px; }
+      .frame-dock { padding: 10px 14px; gap: 10px; bottom: 12px; }
+      .frame-dock .dock-fader { flex-basis: 64px; }
+      .frame-dock .dock-title { font-size: 13px; max-width: 42vw; }
+      .frame-dock .dock-play { width: 44px; height: 44px; flex-basis: 44px; }
+      .frame-dock .dock-wave { display: none; }
+      .frame-dock .dock-label { display: none; }
+      .frame-dock .dock-vol { display: none; }
+      .track-iframe.is-live { right: 0; bottom: 0; width: 100%; height: 56vw; border-radius: 0; border: 0; }
     }
+    @media (prefers-reduced-motion: reduce) { .frame-dock.is-playing .dock-wave i { animation: none; } }
+
   </style>`);
 
   // 0. Dynamic cinematic background canvas (fixed, behind everything)
@@ -441,20 +443,6 @@
   cards.forEach((card, index) => {
     const d = gameData[index] || gameData[0];
     card.style.paddingBottom = '18vh';
-    const vc = card.querySelector('.video-container');
-    if (vc) vc.insertAdjacentHTML('afterend', `
-        <div class="track-deck" data-track="${index}" style="max-width:1200px;margin:110px auto 60px;width:100%;">
-          <button class="track-play" aria-label="Toggle soundtrack">&#9654;</button>
-          <div class="track-meta">
-            <span class="track-label">Soundtrack / Main Theme</span>
-            <span class="track-name">${d.track || d.title}</span>
-          </div>
-          <div class="track-cta">
-            <button class="track-activate" aria-label="Play OST"><span class="dot"></span>Play Ost</button>
-            <div class="track-wave">${'<i></i>'.repeat(18)}</div>
-          </div>
-        </div>
-      `);
 
     const combatItems = d.combat.map((l, i) => `<li style="display:flex;gap:18px;align-items:baseline;padding:15px 0;border-bottom:1px solid #1f1f24;"><span class="editorial-ghost" style="flex:0 0 34px;">0${i+1}</span><span style="font-size:17px;line-height:1.6;color:#cfcfd5;">${l}</span></li>`).join('');
 
@@ -548,15 +536,27 @@
     canvas.style.background = `radial-gradient(1200px 800px at 80% -10%, ${hexToRgba(accent, 0.32)}, transparent 60%), radial-gradient(1000px 700px at 10% 110%, #11131f, transparent 60%)`;
   }
 
-  // --- Soundtrack helpers ---
-  const trackFrames = {};  // data-card -> { iframe, strip }
-  // Brings the hidden track iframe into a visible on-screen player so YouTube's
-  // autoplay policy treats its audio commands as explicit (post-gesture) playback.
-  function promoteTrackIframe(t) {
-    t.iframe.classList.add('is-live');
-  }
-  document.querySelectorAll('.track-deck').forEach(strip => {
-    const idx = parseInt(strip.getAttribute('data-track') || '0', 10);
+  // ==========================================================================
+  // GLOBAL FLOATING AUDIO DOCK + BIDIRECTIONAL SCROLL AUDIO MANAGEMENT
+  // A single persistent glass dock (play/pause, equalizer bars, title, volume)
+  // that syncs to the ACTIVE section's soundtrack, and enforces strict
+  // mute/pause whenever the user scrolls BACKWARD or a video trailer is on
+  // screen — guaranteeing that no two audio streams ever overlap.
+  // ==========================================================================
+  const trackFrames = {};  // idx -> { iframe, playing }
+
+  // audio state machine
+  const dock = {
+    activeIdx: 0,
+    playing: false,      // dock is genuinely driving audio right now
+    playIntended: true,  // user wants the soundtrack for the current section
+    volume: 90,
+    lastY: window.pageYOffset || 0,
+    scrollDir: 1,        // 1 = forward (down), -1 = backward (up)
+    videoActive: false   // true while the active section's trailer is on screen
+  };
+
+  document.querySelectorAll('.moment-card').forEach((card, idx) => {
     const g = gameData[idx];
     const f = document.createElement('iframe');
     f.className = 'track-iframe';
@@ -564,27 +564,45 @@
     f.title = 'Soundtrack player';
     f.src = `https://www.youtube.com/embed/${g.music}?autoplay=0&mute=1&controls=0&enablejsapi=1&playlist=${g.music}&loop=1&start=${g.musicStart}`;
     document.body.appendChild(f);
-    trackFrames[idx] = { iframe: f, strip: strip, playing: false, armed: false };
-    strip.querySelector('.track-play').addEventListener('click', function(ev) {
-      ev.stopPropagation();
-      toggleTrack(idx);
-    });
-    // The labeled PLAY OST button is the explicit, always-visible click surface that
-    // satisfies the browser's user-activation requirement for unMute/playVideo.
-    strip.querySelector('.track-activate').addEventListener('click', function(ev) {
-      ev.stopPropagation();
-      toggleTrack(idx);
-    });
+    trackFrames[idx] = { iframe: f, playing: false };
   });
 
-  // Route an audio command to the track iframe through the correct target origin.
+  // --- lifecycle of the single promoted visible player --------------------
+  function setLiveIframe(idx) {
+    Object.keys(trackFrames).forEach(k => {
+      trackFrames[k].iframe.classList.toggle('is-live', parseInt(k, 10) === idx);
+    });
+  }
+
+  // --- dock DOM ------------------------------------------------------------
+  const dockEl = document.createElement('div');
+  dockEl.className = 'frame-dock';
+  dockEl.innerHTML = `
+    <button class="dock-play" aria-label="Play or pause soundtrack">
+      <span class="ico-play" style="font-size:17px;">&#9654;</span>
+      <span class="ico-pause" style="font-size:15px;">&#10073;&#10073;</span>
+    </button>
+    <div class="dock-meta">
+      <span class="dock-label">FRAME / Now Syncing</span>
+      <span class="dock-title">${gameData[0].track || gameData[0].title}</span>
+    </div>
+    <div class="dock-wave">${'<i></i>'.repeat(20)}</div>
+    <input class="dock-fader" type="range" min="0" max="100" value="90" aria-label="Volume">
+    <span class="dock-vol">90</span>
+  `;
+  document.body.appendChild(dockEl);
+  const dockPlayBtn = dockEl.querySelector('.dock-play');
+  const dockTitle = dockEl.querySelector('.dock-title');
+  const dockVol = dockEl.querySelector('.dock-vol');
+  const dockFader = dockEl.querySelector('.dock-fader');
+
   function postTrack(idx, cmd, args) {
     const t = trackFrames[idx];
     if (!t || !t.iframe.contentWindow) return false;
     return ytPost(t.iframe.contentWindow, cmd, args);
   }
 
-  // Command the section's game iframe (its cinematic score) to fully take over audio.
+  // Route the section's game iframe (its cinematic trailer score) to take over audio.
   function commandGameAudio(idx) {
     const card = document.querySelectorAll('.moment-card')[idx];
     const slot = card ? card.querySelector('.video-slot') : null;
@@ -595,50 +613,78 @@
     }
   }
 
-  function toggleTrack(idx) {
-    const t = trackFrames[idx];
-    if (!t) return;
-    if (t.playing) {
-      postTrack(idx, 'pauseVideo');
-      t.playing = false;
-      t.strip.classList.remove('is-playing');
-    } else {
-      // Pause any other playing track, then promote THIS track's iframe to a visible
-      // on-screen player and start it. Promotion on top of a direct click is what lets
-      // YouTube honor playVideo/unMute under modern autoplay restrictions.
-      Object.keys(trackFrames).forEach(k => {
-        if (k != idx && trackFrames[k].playing) {
-          postTrack(parseInt(k,10), 'pauseVideo');
-          trackFrames[k].playing = false;
-          trackFrames[k].strip.classList.remove('is-playing');
-        }
-      });
-      promoteTrackIframe(t);
-      postTrack(idx, 'playVideo');
-      postTrack(idx, 'unMute');
-      postTrack(idx, 'setVolume', 100);
-      // route the section's game iframe to carry the cinematic score
-      commandGameAudio(idx);
-      t.playing = true;
-      t.strip.classList.add('is-playing');
+  function dockPlay() {
+    // single-source playback: pause every other section stream
+    Object.keys(trackFrames).forEach(k => {
+      const ki = parseInt(k, 10);
+      if (ki !== dock.activeIdx && trackFrames[ki].playing) {
+        postTrack(ki, 'pauseVideo');
+        trackFrames[ki].playing = false;
+      }
+    });
+    setLiveIframe(dock.activeIdx);
+    postTrack(dock.activeIdx, 'playVideo');
+    postTrack(dock.activeIdx, 'unMute');
+    postTrack(dock.activeIdx, 'setVolume', dock.volume);
+    trackFrames[dock.activeIdx].playing = true;
+    dock.playing = true;
+    dockEl.classList.add('is-playing');
+  }
+
+  function dockPause() {
+    postTrack(dock.activeIdx, 'pauseVideo');
+    if (trackFrames[dock.activeIdx]) trackFrames[dock.activeIdx].playing = false;
+    dock.playing = false;
+    dockEl.classList.remove('is-playing');
+  }
+
+  // BIDIRECTIONAL STRICT MUTE: if the user scrolls backward, or a trailer is on
+  // screen, the soundtrack is force-paused — never allowed to overlap video audio.
+  function syncAudio() {
+    if (typeof audioUnlocked === 'undefined' || !audioUnlocked) return;
+    const blocked = dock.scrollDir === -1 || dock.videoActive;
+    if (blocked) {
+      if (dock.playing) dockPause();
+    } else if (dock.playIntended) {
+      if (!dock.playing) dockPlay();
     }
   }
 
-  // Section-locking: drive msgs from the same active observer
-  function resignTrack(idx) {
-    Object.keys(trackFrames).forEach(k => {
-      const t = trackFrames[k];
-      const ki = parseInt(k, 10);
-      if (ki === idx) {
-        t.strip.classList.add('is-active');
-        t.armed = true;
-      } else {
-        t.strip.classList.remove('is-active');
-        if (t.playing) { postTrack(ki, 'pauseVideo'); t.playing = false; t.strip.classList.remove('is-playing'); }
-        t.armed = false;
-      }
-    });
+  dockPlayBtn.addEventListener('click', function() {
+    dock.playIntended = !dock.playing;
+    if (dock.playIntended) dockPlay(); else dockPause();
+    syncAudio();
+  });
+
+  dockFader.addEventListener('input', function() {
+    dock.volume = parseInt(dockFader.value, 10);
+    dockVol.textContent = dock.volume;
+    postTrack(dock.activeIdx, 'setVolume', [dock.volume]);
+  });
+
+  // expose dock so the active observer can sync section state
+  function syncDockState(idx) {
+    dock.activeIdx = idx;
+    const g = gameData[idx] || gameData[0];
+    dockTitle.textContent = g.track || g.title;
+    dockEl.style.setProperty('--accent', g.accent || '#e53935');
+    setLiveIframe(idx);
   }
+
+  // --- scroll-direction tracking (bidirectional) --------------------------
+  let scrollRAF = false;
+  function onScrollTick() {
+    const y = window.pageYOffset || 0;
+    if (y > dock.lastY + 2) dock.scrollDir = 1;
+    else if (y < dock.lastY - 2) dock.scrollDir = -1;
+    dock.lastY = y;
+    syncAudio();
+    scrollRAF = false;
+  }
+  function onScroll() {
+    if (!scrollRAF) { scrollRAF = true; requestAnimationFrame(onScrollTick); }
+  }
+  document.addEventListener('scroll', onScroll, { passive: true });
 
   // Tracks which sections have ever been walked (so exit hand-off only triggers after video played)
   const everActive = new Set();
@@ -652,34 +698,15 @@
       const accent = card ? card.getAttribute('data-accent') : '#e53935';
       const idx = card ? parseInt(card.getAttribute('data-index') || '0', 10) : 0;
 
-      // ---------- HANDS-OFF: video exits view -> pause video, soundtrack takes over ----------
+      // ---------- EXIT: trailer scrolled past -> pause video, dock soundtrack takes over ----------
       if (!entry.isIntersecting) {
         if (everActive.has(idx)) {
-          // pause the video now that it's scrolled past
           if (iframe && iframe.contentWindow) {
             ytPost(iframe.contentWindow, 'pauseVideo');
           }
-          // soundtrack cleanly takes over, playing continuously for this section
-          if (typeof audioUnlocked !== 'undefined' && audioUnlocked && trackFrames[idx] && !trackFrames[idx].playing) {
-            Object.keys(trackFrames).forEach(k => {
-              const ki = parseInt(k, 10);
-              if (ki !== idx && trackFrames[ki].playing) {
-                postTrack(ki, 'pauseVideo');
-                trackFrames[ki].playing = false;
-                trackFrames[ki].strip.classList.remove('is-playing');
-              }
-            });
-            if (trackFrames[idx] && !trackFrames[idx].iframe.classList.contains('is-live')) {
-              trackFrames[idx].iframe.classList.add('is-live');
-            }
-            postTrack(idx, 'playVideo');
-            postTrack(idx, 'unMute');
-            postTrack(idx, 'setVolume', 100);
-            trackFrames[idx].playing = true;
-            trackFrames[idx].strip.classList.add('is-playing');
-            trackFrames[idx].strip.classList.add('is-active');
-            trackFrames[idx].armed = true;
-          }
+          // no trailer on screen for this exit hand-off (unless a lower one is)
+          dock.videoActive = false;
+          syncAudio();
         }
         return;
       }
@@ -702,6 +729,11 @@
 
       shiftBackground(accent);
 
+      // trailer is now active & on-screen -> strictly mute the dock during overlap
+      dock.videoActive = true;
+      syncDockState(idx);
+      dock.playIntended = true;
+
       if (iframe && iframe.contentWindow) {
         ytPost(iframe.contentWindow, 'playVideo');
         if (typeof audioUnlocked !== 'undefined' && audioUnlocked) {
@@ -710,8 +742,7 @@
         }
       }
 
-      // SECTION-LOCKED SOUNDTRACK: arm this section's player; pause track of prior section for takeover
-      resignTrack(idx);
+      syncAudio();
     });
   }, { threshold: 0.5 });
 

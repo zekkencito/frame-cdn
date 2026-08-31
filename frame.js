@@ -5,15 +5,51 @@
   // Every audio command must be sent over the POST-MESSAGE channel with the correct
   // target origin, and only from a trusted user-activation context. This helper is the
   // single chokepoint so we never scatter '*' (origin-agnostic) sends.
+  //
+  // PlayerProxy handshake: YouTube throws a "PlayerProxy error in method call" when a
+  // postMessage command arrives before the embedded player has finished building its
+  // internal proxy bridge. To avoid that race we gate every command on a per-window
+  // readiness flag (set by YouTube's onReady/infoDelivery handshake), queue commands
+  // that arrive too early, and flush them the moment the player signals ready (with a
+  // bounded 2.5s fallback so nothing is ever permanently dropped).
   var YT_ORIGIN = 'https://www.youtube.com';
+  function ytSend(win, payload) {
+    if (!win) return false;
+    try { win.postMessage(JSON.stringify(payload), YT_ORIGIN); return true; }
+    catch (e) { return false; }
+  }
+  function ytFlush(win) {
+    if (!win || !win.__ytQueue) return;
+    var q = win.__ytQueue;
+    win.__ytQueue = null;
+    for (var i = 0; i < q.length; i++) ytSend(win, q[i]);
+  }
   function ytPost(targetWin, func, args) {
     if (!targetWin) return false;
     var payload = { event: 'command', func: func, args: args === undefined ? '' : args };
-    try {
-      targetWin.postMessage(JSON.stringify(payload), YT_ORIGIN);
-      return true;
-    } catch (e) { return false; }
+    if (targetWin.__ytReady) return ytSend(targetWin, payload);
+    // Player not confirmed ready yet: defer the command until the handshake fires.
+    (targetWin.__ytQueue = targetWin.__ytQueue || []).push(payload);
+    if (!targetWin.__ytFlushTimer) {
+      targetWin.__ytFlushTimer = setTimeout(function() {
+        targetWin.__ytReady = true;
+        ytFlush(targetWin);
+      }, 2500);
+    }
+    return true;
   }
+  // Mark each embedded player ready the moment YouTube signals it, then flush any
+  // commands that were deferred while the proxy bridge was still initializing.
+  document.addEventListener('message', function(ev) {
+    var raw = ev.data;
+    if (!raw || typeof raw !== 'string') return;
+    var msg = null;
+    try { msg = JSON.parse(raw); } catch (e) { return; }
+    if (msg && (msg.event === 'onReady' || msg.event === 'infoDelivery')) {
+      var win = ev.source;
+      if (win) { win.__ytReady = true; ytFlush(win); }
+    }
+  });
 
   // 0a. INSTANT YOUTUBE PRELOADER: preconnect network handshakes
   ['https://www.youtube.com', 'https://www.google.com', 'https://shared.akamai.steamstatic.com', 'https://i.ytimg.com'].forEach(function(h){
@@ -823,7 +859,19 @@
   // ======================= PREDICTIVE N+1 PRE-LOAD (instant video, zero lag) =======================
   function postToFrame(container, payload) {
     const f = container ? container.querySelector('.yt-iframe') : null;
-    if (f && f.contentWindow) f.contentWindow.postMessage(payload, YT_ORIGIN);
+    if (!f || !f.contentWindow) return;
+    // Same readiness gating as ytPost so preload commands never hit the PlayerProxy race.
+    const win = f.contentWindow;
+    if (win.__ytReady) { try { win.postMessage(payload, YT_ORIGIN); } catch (e) {} return; }
+    win.__ytQueue = win.__ytQueue || [];
+    win.__ytQueue.push(payload);
+    if (!win.__ytFlushTimer) {
+      win.__ytFlushTimer = setTimeout(function() {
+        win.__ytReady = true;
+        const q = win.__ytQueue; win.__ytQueue = null;
+        if (q) for (let i = 0; i < q.length; i++) { try { win.postMessage(q[i], YT_ORIGIN); } catch (e) {} }
+      }, 2500);
+    }
   }
   function prepNext(nextIndex) {
     if (nextIndex >= gameData.length) nextIndex = 0;

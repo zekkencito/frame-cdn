@@ -1,90 +1,117 @@
 (function() {
   function run() {
 
+  // 0b. YOUTUBE IFrame API CONSTANTS + SAFE COMMAND ROUTER
+  // Every audio command must be sent over the POST-MESSAGE channel with the correct
+  // target origin, and only from a trusted user-activation context. This helper is the
+  // single chokepoint so we never scatter '*' (origin-agnostic) sends.
+  var YT_ORIGIN = 'https://www.youtube.com';
+  function ytPost(targetWin, func, args) {
+    if (!targetWin) return false;
+    var payload = { event: 'command', func: func, args: args === undefined ? '' : args };
+    try {
+      targetWin.postMessage(JSON.stringify(payload), YT_ORIGIN);
+      return true;
+    } catch (e) { return false; }
+  }
+
   // 0a. INSTANT YOUTUBE PRELOADER: preconnect network handshakes
-  ['https://www.youtube.com', 'https://www.google.com', 'https://shared.akamai.steamstatic.com', 'https://i.ytimg.com'].forEach(function(h){
-    var l = document.createElement('link');
-    l.rel = 'preconnect'; l.href = h;
-    document.head.appendChild(l);
-    var d = document.createElement('link');
-    d.rel = 'dns-prefetch'; d.href = h;
-    document.head.appendChild(d);
+  const head = document.head || document.getElementsByTagName('head')[0];
+  const preconnects = ['https://www.youtube.com', 'https://i.ytimg.com', 'https://s.ytimg.com'];
+  preconnects.forEach(href => {
+    const l1 = document.createElement('link');
+    l1.rel = 'preconnect';
+    l1.href = href;
+    head.appendChild(l1);
+    const l2 = document.createElement('link');
+    l2.rel = 'dns-prefetch';
+    l2.href = href;
+    head.appendChild(l2);
   });
 
-  document.head.insertAdjacentHTML('beforeend', `<style>
-    html, body, .section, .container { overflow-y: auto !important; overflow-x: hidden !important; height: auto !important; min-height: 100vh !important; display: block !important; }
-    .moment-grid { display: block !important; position: relative !important; width: 100% !important; z-index: 1 !important; }
-    body { background: #08080a !important; color: #e6e6e9; font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; transition: background 1.2s ease !important; }
-    .frame-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; overflow: hidden; background: #08080a; transition: background 1.4s ease; }
-    .frame-canvas::before { content: ""; position: absolute; inset: 0; background: radial-gradient(1200px 800px at 80% -10%, var(--glow, rgba(229,57,53,0.16)), transparent 60%); transition: background 1.4s ease; }
+  const css = (`
+    <style>
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: #08080a; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    .frame-wrapper { width: 100%; background: #08080a; }
+    .moment-card { position: relative; width: 100%; display: block; }
+    .moment-card.dimmed { opacity: 0.38; }
+    .moment-card.dimmed .video-container video, .moment-card.dimmed .video-container iframe { filter: grayscale(80%) brightness(0.6); }
+    .video-container { position: relative; overflow: visible; }
+    .video-slot { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+    .video-slot iframe { width: 100%; height: 100%; border: 0; }
+    .moment-grid { display: block; }
+    .moment-card { margin-bottom: 0; }
 
-    .moment-card { min-height: 200vh !important; content-visibility: auto; contain-intrinsic-size: 200vh; }
-    .video-slot { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
-    .video-slot.is-active { opacity: 1; pointer-events: auto; }
-    .moment-card { transition: opacity 0.9s ease, transform 0.9s ease; opacity: 1; }
-    .moment-card.dimmed { opacity: 0.3; }
-
-    /* ===== STAGGERED CASCADE (IN & OUT) — one-by-one clean wave, center-of-screen trigger ===== */
-    .reveal-target { opacity: 0; transform: translateY(40px); transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); transition-delay: calc(var(--index, 0) * 0.12s); will-change: opacity, transform; }
-    .reveal-target.is-visible { opacity: 1; transform: translateY(0); }
-    .reveal-target.is-leaving { opacity: 0; transform: translateY(-24px); }
-    .gallery-grid img { opacity: 0; transform: translateY(30px); transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); transition-delay: calc(var(--index, 0) * 0.12s); will-change: opacity, transform; }
-    .gallery-grid figure { --fi: 0; }
-    .gallery-grid figure[data-index] { --fi: var(--index, 0); }
-    .gallery-grid figure[data-index] img { --index: var(--fi, 0); }
-    .gallery-grid.gallery-in img { opacity: 1; transform: translateY(0); }
-    .gallery-grid.gallery-out img { opacity: 0; transform: translateY(-16px); }
-
-    /* ===== GALLERY HOVER ZOOM + LIGHTBOX ===== */
-    .gallery-grid img { cursor: pointer; transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.7s cubic-bezier(0.16,1,0.3,1); transform: translateY(30px) scale(1); will-change: transform, opacity; }
-    .gallery-grid figure { overflow: hidden; }
-    .gallery-grid.gallery-in img { opacity: 1; transform: translateY(0) scale(1); }
-    .gallery-grid.gallery-out img { opacity: 0; transform: translateY(-16px) scale(1); }
-    .gallery-grid figure:hover img { transform: translateY(0) scale(1.06); }
-    .frame-lightbox { position: fixed; inset: 0; z-index: 10000; background: rgba(6,6,8,0.95); backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.35s cubic-bezier(0.16,1,0.3,1); }
-    .frame-lightbox.is-open { opacity: 1; pointer-events: auto; }
-    .frame-lightbox figure { margin: 0; max-width: 92vw; max-height: 90vh; position: relative; }
-    .frame-lightbox img { max-width: 92vw; max-height: 90vh; width: auto; height: auto; object-fit: contain; display: block; box-shadow: 0 30px 120px rgba(0,0,0,0.85); border: 1px solid #2e2e35; }
-    .frame-lightbox .lb-close { position: absolute; top: 24px; right: 28px; background: none; border: 1px solid #3a3a42; color: #fff; font-size: 18px; width: 48px; height: 48px; cursor: pointer; transition: all 0.25s ease; z-index: 2; display: flex; align-items: center; justify-content: center; }
-    .frame-lightbox .lb-close:hover { background: #e53935; border-color: #e53935; color: #08080a; }
-    .frame-lightbox .lb-caption { position: absolute; left: 0; bottom: -44px; font-family: 'SFMono-Regular','Menlo','Consolas',monospace; font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: #8A8F98; }
-
-    /* ===== BLOOD RAIN: dark neon-crimson cinematic grade ===== */
-    .bloodrain .gallery-grid img { filter: brightness(0.72) contrast(1.32) saturate(1.55) drop-shadow(0 4px 22px rgba(216,27,96,0.45)) hue-rotate(-6deg); }
-    .bloodrain .game-info .editorial-hero img { filter: brightness(0.74) contrast(1.3) saturate(1.5) drop-shadow(0 6px 30px rgba(216,27,96,0.42)) hue-rotate(-6deg); }
-
-    /* ===== ANTI-SLOP EDITORIAL: sharp brutalist framing ===== */
+    .editorial-hero h3 { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    .editorial-kicker { font-family: 'SFMono-Regular','Menlo','Consolas',monospace; font-size: 11px; letter-spacing: 0.32em; text-transform: uppercase; color: #7a7a82; }
+    .editorial-ghost { font-family: 'SFMono-Regular','Menlo','Consolas',monospace; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: #5c5c66; }
+    .editorial-rule { height: 1px; background: transparent; margin: 18px 0 0; }
+    .editorial-rule.accent { background: linear-gradient(90deg, var(--accent), transparent); }
     .game-info { --accent: #e53935; }
-    .editorial-kicker { font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace; font-size: 11px; letter-spacing: 0.34em; text-transform: uppercase; color: #7a7a82; }
-    .editorial-rule { height: 1px; background: #26262b; }
-    .editorial-rule.accent { background: var(--accent); height: 2px; }
-    .editorial-ghost { font-family: 'SFMono-Regular','Menlo','Consolas',monospace; font-size: 12px; letter-spacing: 0.2em; color: #2c2c33; text-transform: uppercase; }
-    .perf-cell { border: 1px solid #232329; background: transparent; border-radius: 0; }
+    .game-info[data-accent] { --accent: attr(data-accent); }
+    .game-info .editorial-rule.accent {
+      background: linear-gradient(90deg, var(--accent), transparent);
+    }
+    .game-info p { font-size: 17px; line-height: 1.85; color: #cfcfd5; }
+    .game-info ul { list-style: none; padding: 0; margin: 0; }
 
-    /* ===== SOUNDTRACK DECK: animated music player, massive breathing room below the video ===== */
-    .track-deck { position: relative; display: flex; align-items: center; gap: 28px; margin: 110px auto 60px; padding: 34px 38px; max-width: 1200px; width: 100%; background: linear-gradient(135deg, rgba(255,255,255,0.035), rgba(255,255,255,0.006)); border: 1px solid #232329; opacity: 0.55; transition: opacity 0.6s ease, border-color 0.6s ease, transform 0.6s ease; overflow: hidden; }
-    .track-deck::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(460px 130px at 6% 0%, rgba(255,255,255,0.07), transparent 60%); }
-    .track-deck::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform 0.8s cubic-bezier(0.16,1,0.3,1); opacity: 0.6; }
-    .track-deck.is-active { opacity: 1; border-color: #2e2e35; transform: translateY(-2px); }
-    .track-deck.is-active::after { transform: scaleX(1); }
-    .track-deck .track-play { width: 54px; height: 54px; flex: 0 0 54px; border: 1px solid #3a3a42; background: #101015; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all 0.25s ease; border-radius: 50%; position: relative; z-index: 1; }
-    .track-deck.is-active .track-play { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
-    .track-deck .track-play:hover { background: var(--accent); border-color: var(--accent); color: #08080a; }
-    .track-deck .track-meta { display: flex; flex-direction: column; gap: 4px; min-width: 0; position: relative; z-index: 1; }
-    .track-deck .track-label { font-family: 'SFMono-Regular','Menlo','Consolas',monospace; font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: #7a7a82; }
-    .track-deck .track-name { font-size: 19px; font-weight: 800; letter-spacing: 0.02em; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    /* waveform / pulse equalizer visual */
-    .track-wave { display: flex; align-items: center; gap: 3px; height: 44px; margin-left: auto; position: relative; z-index: 1; }
-    .track-wave i { width: 4px; height: 100%; display: block; background: var(--accent); opacity: 0.28; transform: scaleY(0.35); transition: opacity 0.4s ease; }
-    .track-deck.is-active .track-wave i { opacity: 0.7; }
-    .track-deck.is-playing .track-wave i { animation: wave 1s ease-in-out infinite; }
-    .track-deck.is-playing .track-wave i:nth-child(2n) { animation-delay: 0.1s; }
-    .track-deck.is-playing .track-wave i:nth-child(3n) { animation-delay: 0.2s; }
-    .track-deck.is-playing .track-wave i:nth-child(4n) { animation-delay: 0.3s; }
-    .track-deck.is-playing .track-wave i:nth-child(5n) { animation-delay: 0.4s; }
-    .track-deck.is-playing .track-wave i:nth-child(7n) { animation-delay: 0.5s; }
+    .reveal-target { opacity: 0; transform: translateY(34px); transition: opacity 0.7s ease, transform 0.7s ease; transition-delay: calc(var(--index,0) * 70ms); will-change: opacity, transform; }
+    .reveal-target.is-visible { opacity: 1; transform: translateY(0); }
+    .reveal-target.is-leaving { opacity: 0; transform: translateY(-20px); }
+
+    .gallery-grid figure { position: relative; overflow: hidden; opacity: 0; transform: translateY(24px); transition: opacity 0.5s ease, transform 0.5s ease; transition-delay: calc(var(--index,0) * 60ms); will-change: opacity, transform; }
+    .gallery-grid figure img { transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+    .gallery-grid figure:hover img { transform: scale(1.06); }
+    .gallery-grid.gallery-in figure { opacity: 1; transform: translateY(0); }
+    .gallery-grid.gallery-out figure { opacity: 0; transform: translateY(-18px); }
+
+    .frame-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none; }
+    #frame-canvas { background: radial-gradient(1200px 800px at 80% -10%, rgba(229,57,53,0.32), transparent 60%), radial-gradient(1000px 700px at 10% 110%, #11131f, transparent 60%); }
+    #frame-canvas::after { content:""; position:absolute; inset:0; opacity:0.05; background-image: linear-gradient(rgba(255,255,255,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.35) 1px, transparent 1px); background-size: 60px 60px; }
+
+    .track-deck { display: flex; align-items: center; gap: 30px; padding: 34px 38px; border: 1px solid #26262b; background: linear-gradient(90deg, rgba(14,14,17,0.92), rgba(10,10,13,0.92)); position: relative; }
+    .track-deck::before { content:""; position:absolute; top:0; left:0; width:4px; height:100%; background: var(--accent); opacity:0.5; transition:opacity 0.3s ease; }
+    .track-deck.is-playing::before { opacity:1; }
+    .track-deck .track-play { width: 44px; height: 44px; border-radius: 50%; border: 1px solid #3a3a42; background: transparent; color: #fff; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.22s ease; }
+    .track-deck .track-play:hover { border-color: var(--accent); color: var(--accent); }
+    .track-deck .track-meta { min-width: 0; }
+    .track-deck .track-label { display: block; font-family:'SFMono-Regular','Menlo','Consolas',monospace; font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; color: #7a7a82; margin-bottom: 6px; }
+    .track-deck .track-name { font-size: 18px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 34vw; }
+    .track-wave { display: flex; align-items: center; gap: 4px; height: 40px; margin-left: auto; }
+    .track-wave i { width: 4px; height: 100%; background: var(--accent); opacity: 0.25; transform: scaleY(0.25); transform-origin: center; transition: opacity 0.3s ease, transform 0.3s ease; }
+    .track-deck.is-playing .track-wave i { opacity: 1; animation: wave 1.1s ease-in-out infinite; }
+    .track-deck.is-playing .track-wave i:nth-child(2), .track-deck.is-playing .track-wave i:nth-child(8) { animation-delay: -0.9s; }
+    .track-deck.is-playing .track-wave i:nth-child(3), .track-deck.is-playing .track-wave i:nth-child(7) { animation-delay: -0.7s; }
+    .track-deck.is-playing .track-wave i:nth-child(4), .track-deck.is-playing .track-wave i:nth-child(6) { animation-delay: -0.5s; }
+    .track-deck.is-playing .track-wave i:nth-child(5) { animation-delay: -0.3s; }
+    .track-deck.is-active:not(.is-playing) .track-wave i { opacity: 0.85; }
     @keyframes wave { 0%,100% { transform: scaleY(0.25); } 50% { transform: scaleY(1); } }
     @media (prefers-reduced-motion: reduce) { .track-deck.is-playing .track-wave i { animation: none; } }
+
+    /* ===== ROBUST AUDIO: explicit PLAY OST activation button =====
+       The soundtrack uses YouTube's IFrame API. Modern autoplay policy only honors
+       unMute/playVideo when (a) the command ships from a real user click and (b) the
+       player iframe is rendered on-screen (not a hidden 1px ghost). This labeled button
+       is the guaranteed-on-click activation surface, and the .is-live class promotes the
+       hidden track iframe to a visible inline player so YouTube unlocks audio. */
+    .track-deck .track-cta { margin-left: auto; display: flex; align-items: center; gap: 18px; position: relative; z-index: 1; }
+    .track-deck .track-activate {
+      font-family: 'SFMono-Regular','Menlo','Consolas',monospace; font-size: 10px; font-weight: 700;
+      letter-spacing: 0.28em; text-transform: uppercase; color: #fff; background: transparent;
+      border: 1px solid #3a3a42; padding: 13px 22px; cursor: pointer; transition: all 0.25s ease;
+      display: inline-flex; align-items: center; gap: 10px; white-space: nowrap;
+    }
+    .track-deck .track-activate:hover { border-color: var(--accent); color: var(--accent); background: rgba(255,255,255,0.03); }
+    .track-deck.is-playing .track-activate { border-color: var(--accent); color: #08080a; background: var(--accent); }
+    .track-deck .track-activate .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 rgba(229,57,53,0.6); }
+    .track-deck.is-playing .track-activate .dot { box-shadow: 0 0 0 0 rgba(229,57,53,0); animation: pulse 1.6s ease-out infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(229,57,53,0.6); } 70% { box-shadow: 0 0 0 10px rgba(229,57,53,0); } 100% { box-shadow: 0 0 0 0 rgba(229,57,53,0); } }
+    /* the hidden 1px ghost is promoted to a real visible inline player only after the user clicks PLAY OST */
+    .track-iframe { position: fixed; left: -9999px; top: 0; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; border: 0; transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease; }
+    .track-iframe.is-live { position: fixed; left: auto; right: 18px; bottom: 18px; width: 300px; height: 169px; opacity: 1; pointer-events: auto; z-index: 5000; border: 1px solid #2e2e35; box-shadow: 0 20px 70px rgba(0,0,0,0.7); }
+    @media (max-width: 767px) { .track-iframe.is-live { right: 0; bottom: 0; width: 100%; height: 56vw; border: 0; } }
 
     @media (max-width: 767px) {
       .track-deck { margin: 72px auto 40px; padding: 26px 20px; gap: 20px; }
@@ -119,9 +146,9 @@
     setTimeout(() => {
       const active = document.querySelector('.video-slot.is-active .yt-iframe');
       if (active && active.contentWindow) {
-        active.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-        active.contentWindow.postMessage('{"event":"command","func":"unMute","args":""}', '*');
-        active.contentWindow.postMessage('{"event":"command","func":"setVolume","args":[100]}', '*');
+        ytPost(active.contentWindow, 'playVideo');
+        ytPost(active.contentWindow, 'unMute');
+        ytPost(active.contentWindow, 'setVolume', [100]);
       }
     }, 500);
   });
@@ -395,12 +422,15 @@
     const vc = card.querySelector('.video-container');
     if (vc) vc.insertAdjacentHTML('afterend', `
         <div class="track-deck" data-track="${index}" style="max-width:1200px;margin:110px auto 60px;width:100%;">
-          <button class="track-play" aria-label="Play soundtrack">&#9654;</button>
+          <button class="track-play" aria-label="Toggle soundtrack">&#9654;</button>
           <div class="track-meta">
             <span class="track-label">Soundtrack / Main Theme</span>
             <span class="track-name">${d.track || d.title}</span>
           </div>
-          <div class="track-wave">${'<i></i>'.repeat(18)}</div>
+          <div class="track-cta">
+            <button class="track-activate" aria-label="Play OST"><span class="dot"></span>Play Ost</button>
+            <div class="track-wave">${'<i></i>'.repeat(18)}</div>
+          </div>
         </div>
       `);
 
@@ -498,26 +528,38 @@
 
   // --- Soundtrack helpers ---
   const trackFrames = {};  // data-card -> { iframe, strip }
+  // Brings the hidden track iframe into a visible on-screen player so YouTube's
+  // autoplay policy treats its audio commands as explicit (post-gesture) playback.
+  function promoteTrackIframe(t) {
+    t.iframe.classList.add('is-live');
+  }
   document.querySelectorAll('.track-deck').forEach(strip => {
     const idx = parseInt(strip.getAttribute('data-track') || '0', 10);
     const g = gameData[idx];
     const f = document.createElement('iframe');
     f.className = 'track-iframe';
+    f.setAttribute('allow', 'autoplay');
+    f.title = 'Soundtrack player';
     f.src = `https://www.youtube.com/embed/${g.id}?autoplay=0&mute=1&controls=0&enablejsapi=1&playlist=${g.id}&loop=1`;
-    f.style.cssText = 'position:absolute;width:1px;height:1px;opacity:0.01;pointer-events:none;border:0;';
     document.body.appendChild(f);
     trackFrames[idx] = { iframe: f, strip: strip, playing: false, armed: false };
     strip.querySelector('.track-play').addEventListener('click', function(ev) {
       ev.stopPropagation();
       toggleTrack(idx);
     });
+    // The labeled PLAY OST button is the explicit, always-visible click surface that
+    // satisfies the browser's user-activation requirement for unMute/playVideo.
+    strip.querySelector('.track-activate').addEventListener('click', function(ev) {
+      ev.stopPropagation();
+      toggleTrack(idx);
+    });
   });
 
+  // Route an audio command to the track iframe through the correct target origin.
   function postTrack(idx, cmd, args) {
     const t = trackFrames[idx];
-    if (!t || !t.iframe.contentWindow) return;
-    const argsStr = args ? '[' + args + ']' : '""';
-    t.iframe.contentWindow.postMessage('{"event":"command","func":"' + cmd + '","args":' + argsStr + '}', '*');
+    if (!t || !t.iframe.contentWindow) return false;
+    return ytPost(t.iframe.contentWindow, cmd, args);
   }
 
   // Command the section's game iframe (its cinematic score) to fully take over audio.
@@ -526,8 +568,8 @@
     const slot = card ? card.querySelector('.video-slot') : null;
     const gFrame = slot ? slot.querySelector('.yt-iframe') : null;
     if (gFrame && gFrame.contentWindow) {
-      gFrame.contentWindow.postMessage('{"event":"command","func":"unMute","args":""}', '*');
-      gFrame.contentWindow.postMessage('{"event":"command","func":"setVolume","args":[100]}', '*');
+      ytPost(gFrame.contentWindow, 'unMute');
+      ytPost(gFrame.contentWindow, 'setVolume', [100]);
     }
   }
 
@@ -539,7 +581,9 @@
       t.playing = false;
       t.strip.classList.remove('is-playing');
     } else {
-      // pause any other playing track + unpause/start this one
+      // Pause any other playing track, then promote THIS track's iframe to a visible
+      // on-screen player and start it. Promotion on top of a direct click is what lets
+      // YouTube honor playVideo/unMute under modern autoplay restrictions.
       Object.keys(trackFrames).forEach(k => {
         if (k != idx && trackFrames[k].playing) {
           postTrack(parseInt(k,10), 'pauseVideo');
@@ -547,8 +591,10 @@
           trackFrames[k].strip.classList.remove('is-playing');
         }
       });
+      promoteTrackIframe(t);
       postTrack(idx, 'playVideo');
-      if (audioUnlocked) postTrack(idx, 'unMute');
+      postTrack(idx, 'unMute');
+      postTrack(idx, 'setVolume', 100);
       // route the section's game iframe to carry the cinematic score
       commandGameAudio(idx);
       t.playing = true;
@@ -589,7 +635,7 @@
         if (everActive.has(idx)) {
           // pause the video now that it's scrolled past
           if (iframe && iframe.contentWindow) {
-            iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+            ytPost(iframe.contentWindow, 'pauseVideo');
           }
           // soundtrack cleanly takes over, playing continuously for this section
           if (typeof audioUnlocked !== 'undefined' && audioUnlocked && trackFrames[idx] && !trackFrames[idx].playing) {
@@ -601,6 +647,9 @@
                 trackFrames[ki].strip.classList.remove('is-playing');
               }
             });
+            if (trackFrames[idx] && !trackFrames[idx].iframe.classList.contains('is-live')) {
+              trackFrames[idx].iframe.classList.add('is-live');
+            }
             postTrack(idx, 'playVideo');
             postTrack(idx, 'unMute');
             postTrack(idx, 'setVolume', 100);
@@ -619,7 +668,7 @@
         if (s !== slot) {
           s.classList.remove('is-active');
           const f = s.querySelector('.yt-iframe');
-          if (f && f.contentWindow) f.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+          if (f && f.contentWindow) ytPost(f.contentWindow, 'pauseVideo');
         }
       });
       if (slot) slot.classList.add('is-active');
@@ -632,10 +681,10 @@
       shiftBackground(accent);
 
       if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+        ytPost(iframe.contentWindow, 'playVideo');
         if (typeof audioUnlocked !== 'undefined' && audioUnlocked) {
-          iframe.contentWindow.postMessage('{"event":"command","func":"unMute","args":""}', '*');
-          iframe.contentWindow.postMessage('{"event":"command","func":"setVolume","args":[100]}', '*');
+          ytPost(iframe.contentWindow, 'unMute');
+          ytPost(iframe.contentWindow, 'setVolume', [100]);
         }
       }
 
@@ -649,7 +698,7 @@
   // ======================= PREDICTIVE N+1 PRE-LOAD (instant video, zero lag) =======================
   function postToFrame(container, payload) {
     const f = container ? container.querySelector('.yt-iframe') : null;
-    if (f && f.contentWindow) f.contentWindow.postMessage(payload, '*');
+    if (f && f.contentWindow) f.contentWindow.postMessage(payload, YT_ORIGIN);
   }
   function prepNext(nextIndex) {
     if (nextIndex >= gameData.length) nextIndex = 0;

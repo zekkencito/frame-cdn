@@ -167,7 +167,7 @@
       .game-info .editorial-hero { padding-left: 18px !important; border-left-width: 2px !important; margin-bottom: 10px !important; }
       .game-info .editorial-hero h3 { font-size: clamp(40px, 11.5vw, 66px) !important; letter-spacing: -0.03em !important; line-height: 0.94 !important; margin: 0 0 16px !important; }
       .game-info .editorial-hero p { font-size: clamp(15.5px, 4.2vw, 17px) !important; line-height: 1.6 !important; }
-      .game-info .editorial-kicker { font-size: 10px !important; letter-spacing: 0.26em !important; }
+      .game-info .editorial-kicker { font-size: 10px !important; letter-spacing: 0.26em !important; color: #c9c9d2 !important; }
 
       /* Lore split (2-col grid) → stacked single column, image above text */
       .game-info > div[style*="grid-template-columns:minmax(0,1.4fr)"] {
@@ -191,6 +191,25 @@
       /* Gallery: tighten gap so 2-col still reads well on narrow screens */
       .gallery-grid { gap: 8px !important; margin-top: 16px !important; }
       .gallery-grid figcaption { top: 8px !important; left: 8px !important; font-size: 10px !important; letter-spacing: 0.14em !important; }
+
+      /* ===== MOBILE CONTRAST BOOST: faint ghost numerals, kickers & hairlines are
+             near-invisible on small screens — lift them so section labels read ===== */
+      /* Combat numeral tags (01, 02 ...) inside the single-col list */
+      .game-info > div[style*="repeat(2,minmax(0,1fr))"] ul .editorial-ghost { color: #a6a6b0 !important; }
+      /* Performance labels (PERF.01 ...) inside each cell */
+      .game-info > div[style*="repeat(4,minmax(0,1fr))"] .perf-cell .editorial-ghost { color: #a6a6b0 !important; }
+
+      /* Hairline rules between combat rows */
+      .game-info > div[style*="repeat(2,minmax(0,1fr))"] ul li { border-bottom-color: #3a3a42 !important; }
+
+      /* Section top rules (--index:3 Combat System, --index:4 Performance strip) */
+      .game-info > div[style*="--index:3"] { border-top-color: #3a3a42 !important; }
+      .game-info > div[style*="--index:4"] { border-top-color: #3a3a42 !important; }
+
+      /* Perf-cell box hairlines */
+      .game-info > div[style*="repeat(4,minmax(0,1fr))"] .perf-cell { border-right-color: #3a3a42 !important; border-left-color: #3a3a42 !important; border-top-color: #3a3a42 !important; border-bottom-color: #38383f !important; }
+      .game-info > div[style*="repeat(4,minmax(0,1fr))"] .perf-cell:nth-child(3),
+      .game-info > div[style*="repeat(4,minmax(0,1fr))"] .perf-cell:nth-child(4) { border-top-color: #3a3a42 !important; }
 
       /* Lore / Combat blocks (--index:3) vertical rhythm */
       .game-info > div.reveal-target { margin-bottom: 56px !important; }

@@ -154,6 +154,48 @@
     @media (max-width: 767px) {
       .frame-scroll-arrow { right: 16px; bottom: 80px; width: 44px; height: 44px; }
     }
+
+    /* ===== MOBILE: reflow editorial text & imagery for small screens ===== */
+    @media (max-width: 767px) {
+      html, body { -webkit-text-size-adjust: 100%; }
+
+      /* Video frame: less crushing clip-path, tighter height so text lands above the fold data */
+      .video-container { height: 56vh !important; clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%) !important; }
+
+      /* Editorial hero header: shrink type, tighten the left accent rail */
+      .game-info { padding: 64px 5% 30px !important; }
+      .game-info .editorial-hero { padding-left: 18px !important; border-left-width: 2px !important; margin-bottom: 10px !important; }
+      .game-info .editorial-hero h3 { font-size: clamp(40px, 11.5vw, 66px) !important; letter-spacing: -0.03em !important; line-height: 0.94 !important; margin: 0 0 16px !important; }
+      .game-info .editorial-hero p { font-size: clamp(15.5px, 4.2vw, 17px) !important; line-height: 1.6 !important; }
+      .game-info .editorial-kicker { font-size: 10px !important; letter-spacing: 0.26em !important; }
+
+      /* Lore split (2-col grid) → stacked single column, image above text */
+      .game-info > div[style*="grid-template-columns:minmax(0,1.4fr)"] {
+        grid-template-columns: 1fr !important;
+        gap: 28px !important;
+        margin-bottom: 56px !important;
+      }
+
+      /* Combat list: 2-col grid → single column */
+      .game-info > div[style*="repeat(2,minmax(0,1fr))"] ul { grid-template-columns: 1fr !important; column-gap: 0 !important; }
+
+      /* Performance cells: 4-col strip → 2x2 grid that wraps cleanly */
+      .game-info > div[style*="repeat(4,minmax(0,1fr))"] {
+        grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+        margin-bottom: 56px !important;
+      }
+      .game-info > div[style*="repeat(4,minmax(0,1fr))"] .perf-cell { padding: 18px 16px !important; border-right: 1px solid #232329 !important; }
+      .game-info > div[style*="repeat(4,minmax(0,1fr))"] .perf-cell:nth-child(3),
+      .game-info > div[style*="repeat(4,minmax(0,1fr))"] .perf-cell:nth-child(4) { border-top: 1px solid #232329 !important; }
+
+      /* Gallery: tighten gap so 2-col still reads well on narrow screens */
+      .gallery-grid { gap: 8px !important; margin-top: 16px !important; }
+      .gallery-grid figcaption { top: 8px !important; left: 8px !important; font-size: 10px !important; letter-spacing: 0.14em !important; }
+
+      /* Lore / Combat blocks (--index:3) vertical rhythm */
+      .game-info > div.reveal-target { margin-bottom: 56px !important; }
+    }
+
   </style>`);
 
   // 0. Dynamic cinematic background canvas (fixed, behind everything)
